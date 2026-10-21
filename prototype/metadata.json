@@ -1,0 +1,6 @@
+{
+  "name": "CompassAI",
+  "description": "Student companion app for navigating AI course policies and assignment permissions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

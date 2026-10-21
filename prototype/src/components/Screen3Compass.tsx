@@ -55,7 +55,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
     }
   }, [messages, isLoading]);
 
-  // Handle asking a question via the /api/advisor route (with seamless local advisor fallback)
+  // Handle asking a question via live Gemini API (with seamless local advisor fallback)
   const handleAskQuestion = async (questionText: string) => {
     if (!questionText.trim() || isLoading) return;
 
@@ -72,7 +72,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
     onSaveRecentSession(questionText);
 
     try {
-      const response = await fetch('/api/advisor', {
+      const response = await fetch('/api/gemini/advisor', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
 
       setMessages((prev) => [...prev, compassMsg]);
     } catch (err) {
-      console.warn('Advisor request failed or offline; using local syllabus engine:', err);
+      console.warn('Live Gemini request failed or offline; using local syllabus engine:', err);
       // Seamless local advisor fallback
       const localAdvice = generatePolicyAdvice(questionText, course, assignment, student.name);
 

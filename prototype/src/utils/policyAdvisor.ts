@@ -1,4 +1,4 @@
-import type { Course, Assignment } from '../types';
+import type { Course, Assignment } from '../types.ts';
 
 export interface GeneratedAdvice {
   verdict: string;
