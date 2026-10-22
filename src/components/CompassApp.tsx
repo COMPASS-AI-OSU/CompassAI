@@ -6,24 +6,37 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Course, Assignment, StudentProfile, RecentSession } from '@/types';
-import { COURSES, STUDENT_PROFILES, INITIAL_RECENT_SESSION } from '@/data/courses';
+import { Course, Assignment, StudentProfile, RecentSession, SessionUser } from '@/types';
+import { COURSES, INITIAL_RECENT_SESSION } from '@/data/courses';
 import { Header } from './Header';
 import { StepBreadcrumb } from './StepBreadcrumb';
 import { Screen1Courses } from './Screen1Courses';
 import { Screen2Assignments } from './Screen2Assignments';
 import { Screen3Compass } from './Screen3Compass';
 
-export default function CompassApp() {
+/** "smith.123@osu.edu" becomes "Smith". We only collect an email, so the name comes from it. */
+function nameFromEmail(email: string): string {
+  const first = email.split('@')[0].split(/[._-]/)[0] || 'there';
+  return first.charAt(0).toUpperCase() + first.slice(1);
+}
+
+function profileFor(user: SessionUser | null): StudentProfile {
+  if (!user) return { id: 'guest', name: 'there', email: '', major: '', year: '' };
+  return { id: user.id, name: nameFromEmail(user.email), email: user.email, major: '', year: '' };
+}
+
+export default function CompassApp({ user }: { user: SessionUser | null }) {
   const [currentScreen, setCurrentScreen] = useState<1 | 2 | 3>(1);
   const [courses] = useState<Course[]>(COURSES);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(COURSES[0]);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(
     COURSES[0].assignments[0] // Default to Crisis Case Preparation & Execution
   );
-  const [studentProfiles] = useState<StudentProfile[]>(STUDENT_PROFILES);
-  const [currentStudent, setCurrentStudent] = useState<StudentProfile>(STUDENT_PROFILES[0]);
-  const [recentSession, setRecentSession] = useState<RecentSession | null>(INITIAL_RECENT_SESSION);
+  const currentStudent = profileFor(user);
+  // Question history is per person, so logged-out visitors never see a "pick up where you left off" card.
+  const [recentSession, setRecentSession] = useState<RecentSession | null>(
+    user ? INITIAL_RECENT_SESSION : null
+  );
   const [isMobileFrame, setIsMobileFrame] = useState<boolean>(false);
 
   // Navigation handlers
@@ -104,9 +117,7 @@ export default function CompassApp() {
         onNavigateScreen={handleDirectNavigation}
         isMobileFrame={isMobileFrame}
         setIsMobileFrame={setIsMobileFrame}
-        studentProfiles={studentProfiles}
-        currentStudent={currentStudent}
-        onSelectStudent={setCurrentStudent}
+        user={user}
       />
 
       {/* Breadcrumb & Quick Stepper with Back Button */}
@@ -180,6 +191,7 @@ export default function CompassApp() {
               course={selectedCourse}
               assignment={selectedAssignment}
               student={currentStudent}
+              isSignedIn={user !== null}
               onBack={handleBackToAssignments}
               onSwitchAssignment={handleSelectAssignment}
               onSaveRecentSession={handleSaveRecentSession}

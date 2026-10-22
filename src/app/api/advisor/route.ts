@@ -1,5 +1,6 @@
 import type { Assignment, Course } from "@/types";
 import { generatePolicyAdvice } from "@/utils/policyAdvisor";
+import { getCurrentUser } from "@/lib/auth";
 
 /**
  * Syllabus policy advisor endpoint used by the Compass chat screen.
@@ -7,6 +8,12 @@ import { generatePolicyAdvice } from "@/utils/policyAdvisor";
  * no AI model is connected yet.
  */
 export async function POST(request: Request) {
+  // Roles table: asking Compass needs sign-in.
+  const user = await getCurrentUser();
+  if (!user) {
+    return Response.json({ error: "Sign in to ask Compass." }, { status: 401 });
+  }
+
   const { question, course, assignment, studentName } = (await request.json()) as {
     question?: string;
     course?: Course;
