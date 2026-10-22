@@ -73,3 +73,10 @@ export interface RecentSession {
   lastActive: string;
   questionSnippet: string;
 }
+
+/** The signed-in person, as the browser sees them. Role is set only by the server. */
+export interface SessionUser {
+  id: string;
+  email: string;
+  role: 'student' | 'instructor';
+}

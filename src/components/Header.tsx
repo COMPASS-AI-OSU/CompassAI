@@ -1,15 +1,15 @@
 import React from 'react';
-import { Compass, Smartphone, Monitor } from 'lucide-react';
-import { StudentProfile } from '../types';
+import Link from 'next/link';
+import { Compass, Smartphone, Monitor, LogIn, LogOut } from 'lucide-react';
+import { SessionUser } from '../types';
+import { signOut } from '@/app/(auth)/actions';
 
 interface HeaderProps {
   currentScreen: 1 | 2 | 3;
   onNavigateScreen: (screen: 1 | 2 | 3) => void;
   isMobileFrame: boolean;
   setIsMobileFrame: (val: boolean) => void;
-  studentProfiles: StudentProfile[];
-  currentStudent: StudentProfile;
-  onSelectStudent: (student: StudentProfile) => void;
+  user: SessionUser | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,9 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateScreen,
   isMobileFrame,
   setIsMobileFrame,
-  studentProfiles,
-  currentStudent,
-  onSelectStudent,
+  user,
 }) => {
   return (
     <header className="w-full bg-neutral-950 text-white border-b-2 border-b-[#BA0C2F] sticky top-0 z-30 transition-colors">
@@ -116,37 +114,47 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* Student Profile Switcher */}
-          <div className="relative group">
-            <div className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-lg border border-neutral-700 bg-neutral-900 hover:bg-neutral-800 transition-colors">
-              <div className="w-6 h-6 rounded-full bg-[#BA0C2F] text-white flex items-center justify-center font-bold text-xs">
-                {currentStudent.name.charAt(0)}
-              </div>
-              <div className="text-left text-xs">
-                <span className="font-bold text-white block leading-tight">
-                  {currentStudent.name}
+          {/* Signed-in person, or a Sign in link */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              {user.role === 'instructor' && (
+                <Link
+                  href="/instructor"
+                  className="hidden sm:inline-flex px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#BA0C2F] hover:bg-[#990000] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  Instructor dashboard
+                </Link>
+              )}
+              <div className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-lg border border-neutral-700 bg-neutral-900">
+                <div
+                  className="w-6 h-6 rounded-full bg-[#BA0C2F] text-white flex items-center justify-center font-bold text-xs"
+                  aria-hidden="true"
+                >
+                  {user.email.charAt(0).toUpperCase()}
+                </div>
+                <span className="hidden sm:block text-xs font-semibold text-white max-w-[180px] truncate">
+                  {user.email}
                 </span>
-                <span className="text-[10px] text-neutral-400 block leading-none font-mono">
-                  {currentStudent.email.split('@')[0]}
-                </span>
               </div>
-              <select
-                aria-label="Switch Student Profile"
-                value={currentStudent.id}
-                onChange={(e) => {
-                  const found = studentProfiles.find((s) => s.id === e.target.value);
-                  if (found) onSelectStudent(found);
-                }}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              >
-                {studentProfiles.map((sp) => (
-                  <option key={sp.id} value={sp.id} className="text-black bg-white">
-                    {sp.name} ({sp.email})
-                  </option>
-                ))}
-              </select>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-600 text-xs font-semibold hover:bg-neutral-800 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
+                  Sign out
+                </button>
+              </form>
             </div>
-          </div>
+          ) : (
+            <Link
+              href="/sign-in"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#BA0C2F] hover:bg-[#990000] text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </header>
