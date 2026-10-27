@@ -107,25 +107,35 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
         return;
       }
 
+      const isOffTopic = data.verdict === 'off_topic';
       const isCovered = data.verdict !== 'ask_instructor';
-      const compassMsg: ChatMessage = {
-        id: `c-${Date.now() + 1}`,
-        sender: 'compass',
-        text: data.answer,
-        timestamp: 'Just now',
-        verdictType:
-          data.verdict === 'allowed'
-            ? 'allowed'
-            : data.verdict === 'not_allowed'
-              ? 'prohibited'
-              : 'contact_instructor',
-        sourceReliedOn: data.quote ? `“${data.quote.replace(/^[“"]+|[”"]+$/g, '')}”` : undefined,
-        isSure: isCovered,
-        sureReason: isCovered
-          ? `Quoted from the ${course.code} syllabus`
-          : 'The syllabus doesn’t clearly cover this question',
-        suggestedContact: data.suggestedContact,
-      };
+      const compassMsg: ChatMessage = isOffTopic
+        ? {
+            // Off-topic (#18): just the polite message, with no verdict and no syllabus quote.
+            id: `c-${Date.now() + 1}`,
+            sender: 'compass',
+            text: data.answer,
+            timestamp: 'Just now',
+            verdictType: 'out_of_scope',
+          }
+        : {
+            id: `c-${Date.now() + 1}`,
+            sender: 'compass',
+            text: data.answer,
+            timestamp: 'Just now',
+            verdictType:
+              data.verdict === 'allowed'
+                ? 'allowed'
+                : data.verdict === 'not_allowed'
+                  ? 'prohibited'
+                  : 'contact_instructor',
+            sourceReliedOn: data.quote ? `“${data.quote.replace(/^[“"]+|[”"]+$/g, '')}”` : undefined,
+            isSure: isCovered,
+            sureReason: isCovered
+              ? `Quoted from the ${course.code} syllabus`
+              : 'The syllabus doesn’t clearly cover this question',
+            suggestedContact: data.suggestedContact,
+          };
 
       setMessages((prev) => [...prev, compassMsg]);
     } catch (err) {
@@ -330,6 +340,23 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
                 const isOutOfScope = msg.verdictType === 'out_of_scope';
                 const isContactInstructor = msg.verdictType === 'contact_instructor';
                 const isUndecided = isOutOfScope || isContactInstructor;
+
+                // Off-topic (#18): a plain note with no verdict, no source and no one to ask.
+                if (isOutOfScope) {
+                  return (
+                    <div key={msg.id} className="flex justify-start">
+                      <div className="w-full bg-white border border-neutral-300 rounded-3xl p-5 sm:p-6 shadow-sm flex items-start gap-2.5">
+                        <HelpCircle className="w-4 h-4 text-neutral-500 shrink-0 mt-0.5" aria-hidden="true" />
+                        <div className="space-y-1">
+                          <p className="text-sm text-neutral-900 font-semibold">{msg.text}</p>
+                          <p className="text-xs text-neutral-600">
+                            Ask whether you can use AI on {assignment.title}, and I’ll check the syllabus.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
 
                 const verdictStyle = isProhibited
                   ? {

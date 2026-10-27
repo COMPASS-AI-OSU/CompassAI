@@ -6,7 +6,10 @@ import * as z from 'zod/v4';
 // The model our AI step spec names (docs/ai-step.md). Short replies keep each call cheap.
 export const COMPASS_MODEL = 'claude-haiku-4-5';
 
-export type CompassVerdict = 'allowed' | 'not_allowed' | 'ask_instructor';
+export type CompassVerdict = 'allowed' | 'not_allowed' | 'ask_instructor' | 'off_topic';
+
+// What Compass says to anything that isn't about this course's AI rules (issue #18).
+export const OFF_TOPIC_ANSWER = 'I can only answer about this course’s AI policy.';
 
 export interface CompassAnswer {
   verdict: CompassVerdict;
@@ -15,7 +18,7 @@ export interface CompassAnswer {
 }
 
 const AnswerSchema = z.object({
-  verdict: z.enum(['allowed', 'not_allowed', 'ask_instructor']),
+  verdict: z.enum(['allowed', 'not_allowed', 'ask_instructor', 'off_topic']),
   answer: z.string(),
   quote: z.string(),
   // What the quoted line itself says about this use. Checked against the verdict in plain code.
@@ -27,7 +30,7 @@ const SYSTEM_PROMPT = `You are Compass, a guide to one Ohio State course's rules
 Answer the student's question using only the syllabus text you are given. Never use general knowledge, other courses, or what is common at other universities.
 
 Return:
-- verdict: "allowed" if the syllabus text clearly permits what the student describes, "not_allowed" if it clearly forbids it, or "ask_instructor" if the text does not clearly cover it.
+- verdict: "allowed" if the syllabus text clearly permits what the student describes, "not_allowed" if it clearly forbids it, or "ask_instructor" if the text does not clearly cover it. Use "off_topic" when the question is not about this course's rules for using AI or on this assignment at all (for example the weather, general trivia, homework answers, or requests to write something); then leave answer and quote empty and set quote_says to "neither".
 - answer: one or two plain sentences for the student, starting with "Yes", "No", or "The syllabus doesn't say".
 - quote: the one sentence from the syllabus text that your verdict relies on, copied exactly, character for character. For "ask_instructor", quote the closest line, or leave it empty if nothing is close.
 - quote_says: what the quoted line itself says about the exact use the student describes: "permits" if the line allows that use, "forbids" if the line prohibits that use, "neither" if the line is about something else.
@@ -37,7 +40,7 @@ Choose "not_allowed" only when a line in the text itself forbids what the studen
 When the rules for the assignment and the course's general policy differ, follow the assignment's rules. When you are unsure, choose "ask_instructor". Never say "allowed" without a quote.`;
 
 // Bump when SYSTEM_PROMPT or the model changes, so saved answers are made again instead of reused.
-export const COMPASS_PROMPT_VERSION = '3';
+export const COMPASS_PROMPT_VERSION = '4';
 
 let client: Anthropic | null = null;
 
@@ -85,6 +88,8 @@ export function enforceQuote(
   sourceText: string
 ): CompassAnswer {
   const { verdict, answer, quote, quote_says } = result;
+  // Off-topic: our own wording, never Claude's, and no syllabus quote (issue #18).
+  if (verdict === 'off_topic') return { verdict, answer: OFF_TOPIC_ANSWER, quote: '' };
   if (verdict === 'ask_instructor') return { verdict, answer, quote };
 
   const quoteFound = normalize(quote).length >= 12 && normalize(sourceText).includes(normalize(quote));
