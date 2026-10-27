@@ -17,12 +17,15 @@ import {
   Calendar,
   GraduationCap,
   Loader2,
+  LogIn,
 } from 'lucide-react';
 
 interface Screen3CompassProps {
   course: Course;
   assignment: Assignment;
   student: StudentProfile;
+  /** Asking Compass needs sign-in (see the roles table in CLAUDE.md). */
+  isSignedIn: boolean;
   onBack: () => void;
   onSwitchAssignment?: (assignment: Assignment) => void;
   onSaveRecentSession: (questionSnippet: string) => void;
@@ -32,6 +35,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
   course,
   assignment,
   student,
+  isSignedIn,
   onBack,
   onSwitchAssignment,
   onSaveRecentSession,
@@ -39,6 +43,8 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionEnded, setSessionEnded] = useState(false);
+  const canAsk = isSignedIn && !sessionEnded;
   const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
   const latestQuestionRef = useRef<HTMLDivElement>(null);
 
@@ -57,7 +63,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
 
   // Handle asking a question via the /api/advisor route (with seamless local advisor fallback)
   const handleAskQuestion = async (questionText: string) => {
-    if (!questionText.trim() || isLoading) return;
+    if (!questionText.trim() || isLoading || !canAsk) return;
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -84,6 +90,13 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
           studentName: student.name,
         }),
       });
+
+      if (response.status === 401) {
+        // Signed out in another tab, or the session expired. Don't answer.
+        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
+        setSessionEnded(true);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`Server returned HTTP ${response.status}`);
@@ -284,7 +297,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
                 <button
                   key={index}
                   onClick={() => handleQuickButtonClick(index)}
-                  disabled={isLoading}
+                  disabled={isLoading || !canAsk}
                   className="group relative flex flex-col justify-between items-start p-4 text-left bg-neutral-50 hover:bg-[#BA0C2F]/5 active:bg-[#BA0C2F]/10 border border-neutral-300 hover:border-[#BA0C2F] rounded-2xl transition-all shadow-2xs hover:shadow-xs cursor-pointer min-h-[84px] disabled:opacity-50"
                 >
                   <span className="text-xs sm:text-sm font-bold text-neutral-900 group-hover:text-[#BA0C2F] leading-snug">
@@ -568,7 +581,36 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
         </div>
       )}
 
+      {/* Logged out (or session ended): ask them to sign in instead of showing the prompt bar */}
+      {!canAsk && (
+        <div className="sticky bottom-3 pt-2">
+          <div
+            role="status"
+            className="bg-white p-4 sm:p-5 rounded-2xl border-2 border-neutral-900 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          >
+            <div className="flex items-start gap-2.5">
+              <LogIn className="w-5 h-5 text-[#BA0C2F] shrink-0 mt-0.5" aria-hidden="true" />
+              <div>
+                <p className="text-sm font-bold text-neutral-950">
+                  {sessionEnded ? 'You’ve been signed out.' : 'Sign in to ask Compass.'}
+                </p>
+                <p className="text-xs text-neutral-700 mt-0.5">
+                  You can read every assignment’s AI rules without an account. Asking Compass needs your OSU email.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/sign-in"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#BA0C2F] hover:bg-[#990000] text-white text-sm font-bold shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-2"
+            >
+              Sign in
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Wireframe bottom element: type: [ ... ] prompt bar */}
+      {canAsk && (
       <div className="sticky bottom-3 pt-2">
         <div className="bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-2xl border-2 border-neutral-300 focus-within:border-[#BA0C2F] shadow-md transition-all">
           <form
@@ -609,6 +651,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
           </form>
         </div>
       </div>
+      )}
 
       {/* Citation Modal */}
       <CitationModal
