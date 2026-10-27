@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { COURSES } from "@/data/courses";
 import { getCurrentUser } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   askCompass,
@@ -123,7 +124,10 @@ export async function POST(request: Request) {
     return Response.json({ error: "Compass couldn't answer right now. Try again." }, { status: 503 });
   }
 
-  const { error: updateError } = await supabase
+  // Students can't update questions rows (issue #29), so the server writes Compass's answer
+  // with the secret key. It touches only the row this student just saved, and only if it
+  // hasn't been answered yet.
+  const { error: updateError } = await createAdminClient()
     .from("questions")
     .update({
       verdict: result.verdict,
@@ -132,7 +136,9 @@ export async function POST(request: Request) {
       model: COMPASS_MODEL,
       answered_at: new Date().toISOString(),
     })
-    .eq("id", row.id);
+    .eq("id", row.id)
+    .eq("owner_id", user.id)
+    .is("verdict", null);
 
   if (updateError) {
     // The student still gets the answer; it just won't be reused next time.
