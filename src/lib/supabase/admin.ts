@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 
 /**
  * Supabase client with the secret key. It skips row-level security, so use it
- * only on the server and only for setting a user's role.
+ * only on the server, and only for setting a user's role and saving Compass's
+ * answers (students can't write those themselves).
  */
 export function createAdminClient() {
   return createClient(
