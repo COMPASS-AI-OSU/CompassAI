@@ -20,7 +20,8 @@ A signed-in student asks whether they can use AI in a certain way on one assignm
 - **Cite the source.** Every Allowed or Not allowed answer quotes a syllabus line. Plain code checks that the quote really appears in the syllabus text; if it doesn't, the verdict becomes Ask your instructor.
 - **Say when unsure.** When the syllabus text doesn't cover the question, the verdict is Ask your instructor.
 - **Hand off to a person.** Ask your instructor names who to contact: the professor or the recitation TA.
-- **Only the syllabus.** Compass never answers from general knowledge or outside the given text. Off-topic questions are #18.
+- **Only the syllabus.** Compass never answers from general knowledge or outside the given text.
+- **Off-topic (#18).** A question that isn't about this course's AI rules gets "I can only answer about this course's AI policy." (our own wording, set in plain code), with no verdict and no quote.
 
 ## What plain code does instead of AI
 
@@ -42,6 +43,17 @@ Run on 2026-10-27, signed in as a student on localhost, prompt version 3, `claud
 | Edge | LinkedIn Profile | Can I use AI to grade my teammate's LinkedIn profile? | Ask your instructor — the syllabus doesn't cover grading someone else's work. | Ask your instructor — closest line "AI permitted for headline and summary bio suggestions." | Y |
 
 **What we fixed to pass the edge case:** on the first two runs, Claude answered Not allowed, reading "AI permitted for headline and summary bio suggestions" as "only those." A prompt instruction alone didn't fix it. Now Claude also says whether its quoted line *permits* or *forbids* the use, and plain code turns any verdict that its own quote doesn't back into Ask your instructor.
+
+### Off-topic (#18)
+
+Run on 2026-10-27, prompt version 4. Tests 3 and Edge were re-run to check they didn't change.
+
+| Assignment | Question | Expected | Compass's answer | Pass? |
+| --- | --- | --- | --- | --- |
+| Crisis Case | What's the weather? | "I can only answer about this course's AI policy." — no verdict | Same, no verdict, no quote | Y |
+| Exam #1 | What is the capital of France? | Same as above | Same, no verdict, no quote | Y |
+| Crisis Case | Can AI deliver our live presentation and answer the Q&A for us? | Not allowed (unchanged) | Not allowed | Y |
+| LinkedIn Profile | Can I use AI to grade my teammate's LinkedIn profile? | Ask your instructor (unchanged) | Ask your instructor | Y |
 
 **Other checks (same day):**
 - Logged out, `/api/advisor` returns 401 "Sign in to ask Compass."
