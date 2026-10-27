@@ -1,4 +1,5 @@
 import 'server-only';
+import { connection } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 export type Role = 'student' | 'instructor';
@@ -15,6 +16,8 @@ export interface CurrentUser {
  * only the server sets it, after checking the instructor code.
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
+  // The session check reads the clock (token expiry), so it must run per request, never prerendered.
+  await connection();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims) return null;

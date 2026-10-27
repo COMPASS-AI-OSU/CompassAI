@@ -8,7 +8,9 @@ import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 export function submitWithoutReset(formAction: (formData: FormData) => void) {
   return (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    // Include the button that was pressed, so one form can have Save and Confirm buttons.
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const formData = new FormData(event.currentTarget, submitter);
     startTransition(() => formAction(formData));
   };
 }
@@ -27,7 +29,7 @@ export function TextField({
 }: {
   id: string;
   label: string;
-  type?: 'text' | 'email' | 'password';
+  type?: 'text' | 'email' | 'password' | 'number' | 'date';
   autoComplete?: string;
   defaultValue?: string;
   error?: string;
