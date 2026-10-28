@@ -11,6 +11,7 @@ import { AssignmentCard, type AssignmentRow } from '@/components/instructor/Assi
 import { AddAssignmentForm } from '@/components/instructor/AddAssignmentForm';
 import { FormAlert } from '@/components/auth/fields';
 import { PublishPanel } from '@/components/instructor/PublishPanel';
+import { CourseCodePanel } from '@/components/instructor/CourseCodePanel';
 import { checkPublishable } from '@/lib/publish';
 
 export const metadata: Metadata = { title: 'Review course · CompassAI' };
@@ -65,6 +66,9 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
     .order('position', { ascending: true })
     .order('created_at', { ascending: true });
 
+  // Only this instructor can read their course's code (row-level security on course_codes).
+  const { data: codeRow } = await supabase.from('course_codes').select('code').eq('course_id', course.id).maybeSingle();
+
   const rows = (assignments ?? []) as AssignmentRow[];
   const confirmed = rows.filter((a) => a.status === 'confirmed').length;
   const publish = checkPublishable({ ...course, assignments: rows });
@@ -105,6 +109,8 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
         />
 
         <CourseDetailsForm course={course} />
+
+        <CourseCodePanel courseId={course.id} code={codeRow?.code ?? null} published={course.status === 'published'} />
 
         <section aria-labelledby="assignments-heading" className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">

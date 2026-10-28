@@ -165,6 +165,7 @@ export default function CompassApp({ user }: { user: SessionUser | null }) {
           {currentScreen === 1 && (
             <Screen1Courses
               student={currentStudent}
+              role={user?.role ?? null}
               courses={courses}
               selectedCourse={selectedCourse}
               onSelectCourse={handleSelectCourse}

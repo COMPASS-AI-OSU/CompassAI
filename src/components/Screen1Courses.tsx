@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Course, RecentSession, StudentProfile } from '../types';
 import type { CourseSearchResult } from '@/app/api/courses/search/route';
+import { MyCoursesPanel } from './MyCoursesPanel';
 import { Search, ArrowRight, History, GraduationCap, ChevronRight, BookOpen, Clock } from 'lucide-react';
 
 const SEARCH_DELAY_MS = 250;
@@ -13,6 +14,8 @@ interface Screen1CoursesProps {
   onContinue: () => void;
   recentSession: RecentSession | null;
   onResumeRecent: () => void;
+  /** Who's signed in: shows My Courses and the course-code box for students. */
+  role?: 'student' | 'instructor' | null;
 }
 
 export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
@@ -23,6 +26,7 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
   onContinue,
   recentSession,
   onResumeRecent,
+  role = null,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   // Published courses from the database that match the search (issue #11).
@@ -105,6 +109,8 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
           Check CarmenCanvas syllabus AI boundaries, COAM rules, and assignment permissions.
         </p>
       </div>
+
+      <MyCoursesPanel role={role} />
 
       {/* Search Input for fast access */}
       <div className="relative">
