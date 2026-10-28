@@ -4,12 +4,12 @@
 
 ## What it does
 
-An instructor uploads their syllabus PDF. Compass reads it and fills in the course (code, name, term, office hours, course-wide AI policy) and every graded assignment (name, due date, points, AI level, the instructor's comment, and the syllabus sentence the AI level came from). Everything is saved as a **Draft**, and every assignment starts as **Needs review**, so the instructor checks each one before students see anything.
+An instructor uploads their syllabus PDF. Compass reads it and fills in the course (code, name, term, professor, office hours, course-wide AI policy) and every graded assignment (name, due date, points, AI level, the instructor's comment, and the syllabus sentence the AI level came from). Everything is saved as a **Draft**, and every assignment starts as **Needs review**, so the instructor checks each one before students see anything.
 
 | | |
 | --- | --- |
 | **Input** | One PDF, up to 10 MB, uploaded straight to the private `syllabi` storage bucket in the instructor's own folder. |
-| **Output** | `is_syllabus`; `course` {code, name, term, office_hours, overall_policy}; `assignments` [{title, due_date, due_text, points, ai_level, instructor_comment, syllabus_quote}]. AI level is one of Allowed, Allowed with disclosure, Partial, Prohibited, or empty when the syllabus doesn't say. |
+| **Output** | `is_syllabus`; `course` {code, name, term, professor, office_hours, overall_policy}; `assignments` [{title, due_date, due_text, points, ai_level, instructor_comment, syllabus_quote}]. AI level is one of Allowed, Allowed with disclosure, Partial, Prohibited, or empty when the syllabus doesn't say. |
 | **Model** | Claude Haiku 5.5 (`claude-haiku-5-5`), effort `medium`, structured output checked against a Zod schema. Called only from server code (`/api/courses/import`). Haiku has no server-side refusal fallback, so a refusal shows the instructor a plain message. |
 | **Trigger** | The "Upload and read syllabus" button, only for signed-in instructors. Never a page load. "Try again" reuses the uploaded PDF. |
 | **Saved** | The course in `courses` and each assignment in `assignments`, both with the instructor's `owner_id`. The PDF stays in storage (`courses.syllabus_path`). |
@@ -42,3 +42,5 @@ Run on 2026-10-27 from localhost, prompt version 2, `claude-haiku-5-5`. (Version
 **Worth a look on review:** in test 1, two assignments with no rule of their own (Weekly Top Hat, Leadership Assessment) came back with no AI level, though the prompt says to apply the course-wide policy; the instructor picks one before confirming. Opus 5.5 gave both Allowed. These are judgment calls, which is why every assignment needs the instructor's confirmation.
 
 **Not yet checked:** a real scanned PDF (no text layer), a 10 MB PDF on the live site, and a syllabus over ~100 pages.
+
+**Prompt version 3 (2026-10-28):** also extracts the professor's name for #11's course search. Re-ran test 1: "Prof. Ty Shepfer", all 14 assignments, 28 s.

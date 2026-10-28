@@ -42,7 +42,7 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
   const supabase = await createClient();
   const { data: course } = await supabase
     .from('courses')
-    .select('id, owner_id, code, name, term, office_hours, overall_policy, status')
+    .select('id, owner_id, code, name, term, professor, office_hours, overall_policy, status')
     .eq('id', id)
     .maybeSingle();
 
