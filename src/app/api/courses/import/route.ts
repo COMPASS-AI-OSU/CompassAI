@@ -93,6 +93,7 @@ export async function POST(request: Request) {
       code: course.code,
       name: course.name,
       term: course.term,
+      professor: course.professor,
       office_hours: course.office_hours,
       overall_policy: course.overall_policy,
       syllabus_path: path,
