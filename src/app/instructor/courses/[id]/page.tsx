@@ -10,6 +10,8 @@ import { CourseDetailsForm } from '@/components/instructor/CourseDetailsForm';
 import { AssignmentCard, type AssignmentRow } from '@/components/instructor/AssignmentCard';
 import { AddAssignmentForm } from '@/components/instructor/AddAssignmentForm';
 import { FormAlert } from '@/components/auth/fields';
+import { PublishPanel } from '@/components/instructor/PublishPanel';
+import { checkPublishable } from '@/lib/publish';
 
 export const metadata: Metadata = { title: 'Review course · CompassAI' };
 
@@ -65,6 +67,7 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
 
   const rows = (assignments ?? []) as AssignmentRow[];
   const confirmed = rows.filter((a) => a.status === 'confirmed').length;
+  const publish = checkPublishable({ ...course, assignments: rows });
   const imported = (await searchParams).imported;
 
   return (
@@ -84,7 +87,7 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
             {course.name ? `: ${course.name}` : ''}
           </h1>
           <p className="text-sm text-neutral-700">
-            {course.term ?? 'Term needed'} · {course.status === 'published' ? 'Published' : 'Draft'} · only you can see this
+            {course.term ?? 'Term needed'} · {course.status === 'published' ? 'Published · students can see this' : 'Draft · only you can see this'}
           </p>
         </div>
 
@@ -94,6 +97,12 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
             below. Nothing is visible to students until you confirm every assignment and publish.
           </FormAlert>
         )}
+
+        <PublishPanel
+          courseId={course.id}
+          status={course.status === 'published' ? 'published' : 'draft'}
+          problems={error ? ['We couldn’t load the assignments. Refresh the page.'] : publish.problems}
+        />
 
         <CourseDetailsForm course={course} />
 

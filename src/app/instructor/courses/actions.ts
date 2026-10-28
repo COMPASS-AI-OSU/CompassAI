@@ -4,6 +4,7 @@ import { refresh } from 'next/cache';
 import { getCurrentUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { AI_LEVELS, type AiLevel } from '@/lib/ai-levels';
+import { checkPublishable } from '@/lib/publish';
 
 export interface ActionState {
   error?: string;
@@ -177,4 +178,55 @@ export async function addAssignment(courseId: string, _prev: ActionState | undef
 
   refresh();
   return { saved: `Added “${values.title}”. Review and confirm it below.` };
+}
+
+// ---------- publish (issue #9) ----------
+
+/** Draft → Published, so students can find the course in search. */
+export async function publishCourse(courseId: string): Promise<ActionState> {
+  const auth = await requireInstructor();
+  if ('error' in auth) return { error: auth.error };
+
+  const supabase = await createClient();
+  const { data: course } = await supabase
+    .from('courses')
+    .select('id, owner_id, code, name, term, status, assignments(status, ai_level)')
+    .eq('id', courseId)
+    .maybeSingle();
+  if (!course || course.owner_id !== auth.user.id) return { error: NOT_YOURS };
+  if (course.status === 'published') return { saved: 'Already published.' };
+
+  const check = checkPublishable({ ...course, assignments: course.assignments ?? [] });
+  if (!check.ready) return { error: check.problems.join(' ') };
+
+  const { data, error } = await supabase
+    .from('courses')
+    .update({ status: 'published', updated_at: new Date().toISOString() })
+    .eq('id', courseId)
+    .select('id');
+  // The database trigger refuses a course that isn't ready (check_violation), e.g. if it changed in another tab.
+  if (error?.code === '23514') return { error: error.message };
+  if (error) return { error: 'We couldn’t publish the course. Try again.' };
+  if (!data?.length) return { error: NOT_YOURS };
+
+  refresh();
+  return { saved: 'Published. Students can now find this course in search.' };
+}
+
+/** Published → Draft, which hides the course and its rules from students again. */
+export async function unpublishCourse(courseId: string): Promise<ActionState> {
+  const auth = await requireInstructor();
+  if ('error' in auth) return { error: auth.error };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('courses')
+    .update({ status: 'draft', updated_at: new Date().toISOString() })
+    .eq('id', courseId)
+    .select('id');
+  if (error) return { error: 'We couldn’t unpublish the course. Try again.' };
+  if (!data?.length) return { error: NOT_YOURS };
+
+  refresh();
+  return { saved: 'Unpublished. Students can no longer see this course.' };
 }
