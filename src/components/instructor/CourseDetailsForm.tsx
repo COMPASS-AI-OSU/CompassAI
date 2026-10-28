@@ -52,7 +52,7 @@ export function CourseDetailsForm({ course }: { course: CourseRow }) {
         hint="As students know you, like Prof. Ty Shepfer. Students can search by this name."
         defaultValue={course.professor}
         error={fe.professor}
-        maxLength={200}
+        maxLength={120}
       />
       <InputField id="course-office-hours" name="office_hours" label="Office hours" defaultValue={course.office_hours} error={fe.office_hours} maxLength={500} />
       <TextAreaField

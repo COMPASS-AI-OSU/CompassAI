@@ -186,7 +186,7 @@ export async function extractSyllabus(pdf: Uint8Array): Promise<ImportResult> {
       code: clean(parsed.course.code, 20),
       name: clean(parsed.course.name, 200),
       term: clean(parsed.course.term, 40),
-      professor: clean(parsed.course.professor, 200),
+      professor: clean(parsed.course.professor, 120),
       office_hours: clean(parsed.course.office_hours, 500),
       overall_policy: clean(parsed.course.overall_policy, 4000),
     },

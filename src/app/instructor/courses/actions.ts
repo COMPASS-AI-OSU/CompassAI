@@ -47,7 +47,7 @@ export async function updateCourse(courseId: string, _prev: ActionState | undefi
     code: code ? limit(code, 20, 'Course code') : 'Enter the course code, like BUS-MHR 2292.',
     name: name ? limit(name, 200, 'Course name') : 'Enter the course name.',
     term: term ? limit(term, 40, 'Term') : 'Enter the term, like Autumn 2026.',
-    professor: limit(professor, 200, 'Professor'),
+    professor: limit(professor, 120, 'Professor'),
     office_hours: limit(officeHours, 500, 'Office hours'),
     overall_policy: limit(policy, 4000, 'AI policy'),
   };
