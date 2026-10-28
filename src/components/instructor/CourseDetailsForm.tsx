@@ -11,6 +11,7 @@ export interface CourseRow {
   code: string | null;
   name: string | null;
   term: string | null;
+  professor: string | null;
   office_hours: string | null;
   overall_policy: string | null;
 }
@@ -44,6 +45,15 @@ export function CourseDetailsForm({ course }: { course: CourseRow }) {
         <InputField id="course-name" name="name" label="Course name" defaultValue={course.name} error={fe.name} maxLength={200} />
         <InputField id="course-term" name="term" label="Term" defaultValue={course.term} error={fe.term} maxLength={40} hint="Like Autumn 2026" />
       </div>
+      <InputField
+        id="course-professor"
+        name="professor"
+        label="Professor"
+        hint="As students know you, like Prof. Ty Shepfer. Students can search by this name."
+        defaultValue={course.professor}
+        error={fe.professor}
+        maxLength={120}
+      />
       <InputField id="course-office-hours" name="office_hours" label="Office hours" defaultValue={course.office_hours} error={fe.office_hours} maxLength={500} />
       <TextAreaField
         id="course-policy"

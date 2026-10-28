@@ -7,7 +7,7 @@ import { AI_LEVELS, type AiLevel } from '@/lib/ai-levels';
 // See docs/ai-syllabus-import.md for what this step does and its test cases.
 export const IMPORT_MODEL = 'claude-haiku-5-5';
 // Bump when the prompt, schema or model changes.
-export const IMPORT_PROMPT_VERSION = '2';
+export const IMPORT_PROMPT_VERSION = '3';
 
 export const MAX_SYLLABUS_BYTES = 10 * 1024 * 1024; // issue #7: up to 10 MB
 
@@ -39,6 +39,10 @@ const SyllabusSchema = z.object({
     code: z.string().nullable().describe('Course code such as "BUS-MHR 2292", or null.'),
     name: z.string().nullable().describe('Course title, or null.'),
     term: z.string().nullable().describe('Term such as "Autumn 2026", or null.'),
+    professor: z
+      .string()
+      .nullable()
+      .describe('The instructor\'s name as the syllabus writes it, such as "Prof. Ty Shepfer", or null.'),
     office_hours: z.string().nullable().describe('Office hours as written, or null.'),
     overall_policy: z
       .string()
@@ -101,6 +105,7 @@ export interface ImportResult {
     code: string | null;
     name: string | null;
     term: string | null;
+    professor: string | null;
     office_hours: string | null;
     overall_policy: string | null;
   };
@@ -181,6 +186,7 @@ export async function extractSyllabus(pdf: Uint8Array): Promise<ImportResult> {
       code: clean(parsed.course.code, 20),
       name: clean(parsed.course.name, 200),
       term: clean(parsed.course.term, 40),
+      professor: clean(parsed.course.professor, 120),
       office_hours: clean(parsed.course.office_hours, 500),
       overall_policy: clean(parsed.course.overall_policy, 4000),
     },

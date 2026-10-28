@@ -40,6 +40,7 @@ export async function updateCourse(courseId: string, _prev: ActionState | undefi
   const code = text(formData, 'code');
   const name = text(formData, 'name');
   const term = text(formData, 'term');
+  const professor = text(formData, 'professor');
   const officeHours = text(formData, 'office_hours');
   const policy = text(formData, 'overall_policy');
 
@@ -47,6 +48,7 @@ export async function updateCourse(courseId: string, _prev: ActionState | undefi
     code: code ? limit(code, 20, 'Course code') : 'Enter the course code, like BUS-MHR 2292.',
     name: name ? limit(name, 200, 'Course name') : 'Enter the course name.',
     term: term ? limit(term, 40, 'Term') : 'Enter the term, like Autumn 2026.',
+    professor: limit(professor, 120, 'Professor'),
     office_hours: limit(officeHours, 500, 'Office hours'),
     overall_policy: limit(policy, 4000, 'AI policy'),
   };
@@ -59,6 +61,7 @@ export async function updateCourse(courseId: string, _prev: ActionState | undefi
       code,
       name,
       term,
+      professor: professor || null,
       office_hours: officeHours || null,
       overall_policy: policy || null,
       updated_at: new Date().toISOString(),
