@@ -178,3 +178,41 @@ export async function addAssignment(courseId: string, _prev: ActionState | undef
   refresh();
   return { saved: `Added “${values.title}”. Review and confirm it below.` };
 }
+
+// ---------- course code (students add the course with it) ----------
+
+/** Codes are 4–20 letters, numbers or dashes, stored in capitals so "shepfer-au26" also works. */
+export async function setCourseCode(courseId: string, _prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
+  const auth = await requireInstructor();
+  if ('error' in auth) return { error: auth.error };
+
+  const code = text(formData, 'join_code').replace(/\s+/g, '').toUpperCase();
+  if (!code) return { fieldErrors: { join_code: 'Enter a code, like SHEPFER-AU26.' } };
+  if (!/^[A-Z0-9-]{4,20}$/.test(code)) {
+    return { fieldErrors: { join_code: 'Use 4 to 20 letters, numbers or dashes, with no spaces.' } };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('course_codes')
+    .upsert({ course_id: courseId, code, updated_at: new Date().toISOString() }, { onConflict: 'course_id' });
+
+  if (error?.code === '23505') return { fieldErrors: { join_code: 'That code is already used by another course. Try a different one.' } };
+  if (error?.code === '42501') return { error: NOT_YOURS };
+  if (error) return { error: 'We couldn’t save the code. Try again.' };
+
+  refresh();
+  return { saved: `Saved. Students can add this course with ${code} once it’s published.` };
+}
+
+export async function removeCourseCode(courseId: string): Promise<ActionState> {
+  const auth = await requireInstructor();
+  if ('error' in auth) return { error: auth.error };
+
+  const supabase = await createClient();
+  const { error } = await supabase.from('course_codes').delete().eq('course_id', courseId);
+  if (error) return { error: 'We couldn’t remove the code. Try again.' };
+
+  refresh();
+  return { saved: 'Code removed. Students who already added the course keep it.' };
+}
