@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Course, RecentSession, StudentProfile } from '../types';
-import { Search, ArrowRight, History, GraduationCap, ChevronRight, BookOpen } from 'lucide-react';
+import type { CourseSearchResult } from '@/app/api/courses/search/route';
+import { Search, ArrowRight, History, GraduationCap, ChevronRight, BookOpen, Clock } from 'lucide-react';
+
+const SEARCH_DELAY_MS = 250;
 
 interface Screen1CoursesProps {
   student: StudentProfile;
@@ -22,6 +25,45 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
   onResumeRecent,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  // Published courses from the database that match the search (issue #11).
+  const [publishedMatches, setPublishedMatches] = useState<CourseSearchResult[]>([]);
+  const [searchError, setSearchError] = useState(false);
+  const [selectedPublishedId, setSelectedPublishedId] = useState<string | null>(null);
+
+  // Search published courses as the student types, after a short pause.
+  const searchTerm = searchQuery.trim();
+  const isSearching = searchTerm.length >= 2;
+  useEffect(() => {
+    const query = searchTerm;
+    if (query.length < 2) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/courses/search?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error ?? `HTTP ${response.status}`);
+        setPublishedMatches(data.courses ?? []);
+        setSearchError(false);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.warn('Course search failed:', err);
+        setPublishedMatches([]);
+        setSearchError(true);
+      }
+    }, SEARCH_DELAY_MS);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchTerm]);
+
+  // Shorter than 2 characters: don't show database results or errors from an older search.
+  const visiblePublished = isSearching ? publishedMatches : [];
+  const showSearchError = isSearching && searchError;
 
   // Find recent course and assignment details if any
   const recentCourse = recentSession
@@ -35,9 +77,9 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
     (c) =>
       c.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.professor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.department.toLowerCase().includes(searchQuery.toLowerCase())
+      c.professor.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const nothingFound = filteredCourses.length === 0 && visiblePublished.length === 0;
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-5 sm:py-8 space-y-6 pb-8 relative">
@@ -83,6 +125,11 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
           </button>
         )}
       </div>
+      {showSearchError && (
+        <p role="status" className="-mt-4 text-xs font-semibold text-[#BA0C2F]">
+          Couldn’t search courses right now. Showing sample courses only.
+        </p>
+      )}
 
       {/* Table / List layout matching whiteboard: Course Name | Professor */}
       <div className="bg-white border border-neutral-300 rounded-2xl shadow-xs overflow-hidden">
@@ -99,8 +146,7 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
 
         {/* Course Rows */}
         <div className="divide-y divide-neutral-200">
-          {filteredCourses.length > 0 ? (
-            filteredCourses.map((course) => {
+          {filteredCourses.map((course) => {
               const isSelected = selectedCourse?.id === course.id;
               return (
                 <div
@@ -172,11 +218,59 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
                   </div>
                 </div>
               );
-            })
-          ) : (
-            <div className="p-8 text-center text-neutral-500 text-sm">
-              No Ohio State courses found matching &ldquo;{searchQuery}&rdquo;.
-            </div>
+            })}
+
+          {/* Published courses from the database (issue #11). Their assignment rules page is #14. */}
+          {visiblePublished.map((course) => {
+            const isSelected = selectedPublishedId === course.id;
+            return (
+              <div
+                key={course.id}
+                onClick={() => setSelectedPublishedId(course.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedPublishedId(course.id);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                className={`w-full text-left grid grid-cols-12 gap-3 px-4 py-3.5 sm:py-4 items-center transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] ${
+                  isSelected
+                    ? 'bg-[#BA0C2F]/5 border-l-4 border-l-[#BA0C2F]'
+                    : 'hover:bg-neutral-50 border-l-4 border-l-transparent'
+                }`}
+              >
+                <div className="col-span-6 sm:col-span-7 pr-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm sm:text-base text-neutral-950 group-hover:text-[#BA0C2F] transition-colors">
+                      {course.code || 'Untitled course'}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-emerald-800 bg-emerald-50 border border-emerald-300 px-1.5 py-0.5 rounded">
+                      Published
+                    </span>
+                  </div>
+                  <div className="text-xs sm:text-sm text-neutral-600 truncate mt-0.5 font-medium">
+                    {[course.name, course.term].filter(Boolean).join(' · ')}
+                  </div>
+                </div>
+                <div className="col-span-6 sm:col-span-5 flex items-center justify-between gap-2">
+                  <span className="text-xs sm:text-sm font-semibold text-neutral-800 truncate pr-1">
+                    {course.professor || '—'}
+                  </span>
+                  {isSelected && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-700 bg-neutral-100 border border-neutral-300 px-2 py-1 rounded-lg shrink-0">
+                      <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                      Assignment rules coming soon
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {nothingFound && (
+            <div className="p-8 text-center text-neutral-500 text-sm">No courses found</div>
           )}
         </div>
       </div>
