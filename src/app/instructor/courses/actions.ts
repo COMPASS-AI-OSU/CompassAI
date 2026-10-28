@@ -181,15 +181,15 @@ export async function addAssignment(courseId: string, _prev: ActionState | undef
 
 // ---------- course code (students add the course with it) ----------
 
-/** Codes are 4–20 letters, numbers or dashes, stored in capitals so "shepfer-au26" also works. */
+/** Codes are 6–20 letters, numbers or dashes, stored in capitals so "shepfer-au26" also works. */
 export async function setCourseCode(courseId: string, _prev: ActionState | undefined, formData: FormData): Promise<ActionState> {
   const auth = await requireInstructor();
   if ('error' in auth) return { error: auth.error };
 
   const code = text(formData, 'join_code').replace(/\s+/g, '').toUpperCase();
   if (!code) return { fieldErrors: { join_code: 'Enter a code, like SHEPFER-AU26.' } };
-  if (!/^[A-Z0-9-]{4,20}$/.test(code)) {
-    return { fieldErrors: { join_code: 'Use 4 to 20 letters, numbers or dashes, with no spaces.' } };
+  if (!/^[A-Z0-9-]{6,20}$/.test(code)) {
+    return { fieldErrors: { join_code: 'Use 6 to 20 letters, numbers or dashes, with no spaces.' } };
   }
 
   const supabase = await createClient();

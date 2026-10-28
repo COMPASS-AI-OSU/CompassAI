@@ -43,7 +43,7 @@ export function CourseCodePanel({ courseId, code, published }: { courseId: strin
           id="join-code"
           name="join_code"
           label={code ? 'Code' : 'Choose a code'}
-          hint="4 to 20 letters, numbers or dashes, like SHEPFER-AU26. Capitals don’t matter."
+          hint="6 to 20 letters, numbers or dashes, like SHEPFER-AU26. Capitals don’t matter."
           defaultValue={code}
           error={state?.fieldErrors?.join_code}
           maxLength={20}
