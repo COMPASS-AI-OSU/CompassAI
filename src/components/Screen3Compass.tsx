@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Course, Assignment, StudentProfile, ChatMessage } from '../types';
-import { generatePolicyAdvice } from '../utils/policyAdvisor';
 import { CitationModal } from './CitationModal';
 import {
   ArrowLeft,
@@ -8,12 +7,10 @@ import {
   Sparkles,
   CheckCircle,
   XCircle,
-  AlertTriangle,
   RotateCcw,
   FileText,
   User,
   HelpCircle,
-  Info,
   Calendar,
   GraduationCap,
   Loader2,
@@ -44,6 +41,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
   const canAsk = isSignedIn && !sessionEnded;
   const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
   const latestQuestionRef = useRef<HTMLDivElement>(null);
@@ -61,9 +59,11 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
     }
   }, [messages, isLoading]);
 
-  // Handle asking a question via the /api/advisor route (with seamless local advisor fallback)
+  // Ask Compass through /api/advisor. The server saves the question, answers it with Claude
+  // from this assignment's syllabus, and reuses the saved answer when asked again.
   const handleAskQuestion = async (questionText: string) => {
     if (!questionText.trim() || isLoading || !canAsk) return;
+    setAskError(null);
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -84,10 +84,9 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          courseId: course.id,
+          assignmentId: assignment.id,
           question: questionText,
-          course,
-          assignment,
-          studentName: student.name,
         }),
       });
 
@@ -98,63 +97,52 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
         return;
       }
 
-      if (!response.ok) {
-        throw new Error(`Server returned HTTP ${response.status}`);
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data) {
+        // No made-up fallback answer: say so and let the student try again.
+        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
+        setInputText(questionText);
+        setAskError(data?.error || 'Compass couldn’t answer right now. Try again.');
+        return;
       }
 
-      const data = await response.json();
-
-      const compassMsg: ChatMessage = {
-        id: `c-${Date.now() + 1}`,
-        sender: 'compass',
-        text: data.answer,
-        timestamp: 'Just now',
-        verdictType: data.verdictType,
-        sourceReliedOn: data.sourceReliedOn,
-        isSure: data.isSure,
-        sureReason: data.sureReason,
-        suggestedContact: data.suggestedContact,
-        metadata: {
-          allowedUses: data.allowedUses,
-          prohibitedUses: data.prohibitedUses,
-        },
-      };
+      const isOffTopic = data.verdict === 'off_topic';
+      const isCovered = data.verdict !== 'ask_instructor';
+      const compassMsg: ChatMessage = isOffTopic
+        ? {
+            // Off-topic (#18): just the polite message, with no verdict and no syllabus quote.
+            id: `c-${Date.now() + 1}`,
+            sender: 'compass',
+            text: data.answer,
+            timestamp: 'Just now',
+            verdictType: 'out_of_scope',
+          }
+        : {
+            id: `c-${Date.now() + 1}`,
+            sender: 'compass',
+            text: data.answer,
+            timestamp: 'Just now',
+            verdictType:
+              data.verdict === 'allowed'
+                ? 'allowed'
+                : data.verdict === 'not_allowed'
+                  ? 'prohibited'
+                  : 'contact_instructor',
+            sourceReliedOn: data.quote ? `“${data.quote.replace(/^[“"]+|[”"]+$/g, '')}”` : undefined,
+            isSure: isCovered,
+            sureReason: isCovered
+              ? `Quoted from the ${course.code} syllabus`
+              : 'The syllabus doesn’t clearly cover this question',
+            suggestedContact: data.suggestedContact,
+          };
 
       setMessages((prev) => [...prev, compassMsg]);
     } catch (err) {
-      console.warn('Advisor request failed or offline; using local syllabus engine:', err);
-      // Seamless local advisor fallback
-      const localAdvice = generatePolicyAdvice(questionText, course, assignment, student.name);
-
-      const compassMsg: ChatMessage = {
-        id: `c-${Date.now() + 1}`,
-        sender: 'compass',
-        text: localAdvice.policySummary,
-        timestamp: 'Just now',
-        verdictType: localAdvice.verdictType,
-        sourceReliedOn:
-          localAdvice.sourceReliedOn ||
-          localAdvice.instructorQuote ||
-          assignment.syllabusClause ||
-          course.overallPolicy,
-        isSure:
-          localAdvice.isSure !== undefined
-            ? localAdvice.isSure
-            : localAdvice.verdictType !== 'contact_instructor' && localAdvice.verdictType !== 'out_of_scope',
-        sureReason:
-          localAdvice.sureReason ||
-          (localAdvice.verdictType === 'contact_instructor'
-            ? 'The syllabus does not cover study coaching or subject tutoring'
-            : 'Grounded in course syllabus guidelines'),
-        suggestedContact:
-          localAdvice.suggestedContact || `${course.professor} or your recitation TA`,
-        metadata: {
-          allowedUses: localAdvice.allowedUses,
-          prohibitedUses: localAdvice.prohibitedUses,
-        },
-      };
-
-      setMessages((prev) => [...prev, compassMsg]);
+      console.warn('Compass request failed:', err);
+      setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
+      setInputText(questionText);
+      setAskError('Compass couldn’t answer right now. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -230,7 +218,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
           <span>{assignment.title}</span>
           <span className="text-neutral-400">·</span>
           <span className="text-[11px] font-bold text-neutral-600 bg-neutral-200/90 border border-neutral-300 px-2 py-0.5 rounded-md">
-            Live Gemini Syllabus Mode
+            Answers from the syllabus
           </span>
         </div>
       </div>
@@ -280,7 +268,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
           </h2>
 
           <p className="text-xs sm:text-sm text-neutral-600">
-            Select one of the common syllabus policy questions below, or type your own question into the prompt bar. Answers are answered live by Gemini grounded strictly in the course syllabus.
+            Pick a common question below, or type your own. Compass answers only from this assignment’s syllabus rules and quotes the line it used.
           </p>
         </div>
 
@@ -304,7 +292,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
                     {qp.label}
                   </span>
                   <span className="text-[10px] font-bold text-neutral-400 group-hover:text-[#BA0C2F] mt-2 flex items-center gap-1">
-                    Ask Gemini live →
+                    Ask Compass →
                   </span>
                 </button>
               );
@@ -346,126 +334,68 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
                   );
                 }
 
-                // Compass message card
-                const isAllowed = msg.verdictType === 'allowed';
+                // Compass message card: one verdict box (green = permitted, red = not allowed,
+                // gray = Compass can't decide), then the syllabus source it relied on.
                 const isProhibited = msg.verdictType === 'prohibited';
                 const isOutOfScope = msg.verdictType === 'out_of_scope';
                 const isContactInstructor = msg.verdictType === 'contact_instructor';
+                const isUndecided = isOutOfScope || isContactInstructor;
+
+                // Off-topic (#18): a plain note with no verdict, no source and no one to ask.
+                if (isOutOfScope) {
+                  return (
+                    <div key={msg.id} className="flex justify-start">
+                      <div className="w-full bg-white border border-neutral-300 rounded-3xl p-5 sm:p-6 shadow-sm flex items-start gap-2.5">
+                        <HelpCircle className="w-4 h-4 text-neutral-500 shrink-0 mt-0.5" aria-hidden="true" />
+                        <div className="space-y-1">
+                          <p className="text-sm text-neutral-900 font-semibold">{msg.text}</p>
+                          <p className="text-xs text-neutral-600">
+                            Ask whether you can use AI on {assignment.title}, and I’ll check the syllabus.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                const verdictStyle = isProhibited
+                  ? {
+                      box: 'bg-[#BA0C2F]/5 border-[#BA0C2F]/40',
+                      heading: 'text-[#BA0C2F]',
+                      label: 'Not allowed',
+                      Icon: XCircle,
+                    }
+                  : isUndecided
+                    ? {
+                        box: 'bg-neutral-100 border-neutral-300',
+                        heading: 'text-neutral-900',
+                        label: isOutOfScope ? 'Not a syllabus question' : 'Ask your instructor',
+                        Icon: isOutOfScope ? HelpCircle : GraduationCap,
+                      }
+                    : {
+                        box: 'bg-emerald-50 border-emerald-300',
+                        heading: 'text-emerald-800',
+                        label: msg.verdictType === 'caution' ? 'Allowed, with conditions' : 'Allowed',
+                        Icon: CheckCircle,
+                      };
 
                 return (
                   <div key={msg.id} className="flex justify-start">
                     <div className="w-full bg-white border border-neutral-300 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-                      {/* Verdict & Certainty Banner */}
-                      <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-neutral-100">
-                        <div className="flex items-center flex-wrap gap-2">
-                          {isAllowed && (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900 bg-neutral-100 border border-neutral-300 px-3 py-1 rounded-lg">
-                              <CheckCircle className="w-4 h-4 text-emerald-600" />
-                              <span>Permitted Within OSU Guidelines</span>
-                            </div>
-                          )}
-                          {isProhibited && (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#BA0C2F] px-3 py-1.5 rounded-lg shadow-2xs">
-                              <XCircle className="w-4 h-4 text-white" />
-                              <span>NOT ALLOWED — Prohibited Activity</span>
-                            </div>
-                          )}
-                          {isContactInstructor && (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900 bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-lg shadow-2xs">
-                              <GraduationCap className="w-4 h-4 text-[#BA0C2F]" />
-                              <span>Ask Professor or TA — Subject Query</span>
-                            </div>
-                          )}
-                          {isOutOfScope && (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800 bg-neutral-100 border border-neutral-300 px-3 py-1.5 rounded-lg shadow-2xs">
-                              <HelpCircle className="w-4 h-4 text-neutral-600" />
-                              <span>OUT OF SCOPE — Not Related to App Function</span>
-                            </div>
-                          )}
-                          {!isAllowed && !isProhibited && !isOutOfScope && !isContactInstructor && (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-50 border border-amber-300 px-3 py-1 rounded-lg">
-                              <AlertTriangle className="w-4 h-4 text-amber-700" />
-                              <span>Caution / Specific Conditions Apply</span>
-                            </div>
-                          )}
-
-                          {/* Requirement 10: Show whether it is sure */}
-                          {msg.isSure !== undefined && (
-                            <div
-                              className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border ${
-                                msg.isSure
-                                  ? 'text-emerald-800 bg-emerald-50 border-emerald-300'
-                                  : 'text-amber-900 bg-amber-50 border-amber-300'
-                              }`}
-                            >
-                              {msg.isSure ? (
-                                <>
-                                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>Sure (Grounded in Syllabus)</span>
-                                </>
-                              ) : (
-                                <>
-                                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                                  <span>Unsure (Not Covered in Syllabus)</span>
-                                </>
-                              )}
-                            </div>
-                          )}
+                      {/* Verdict: whether what was asked is permitted, in plain words */}
+                      <div className={`p-4 rounded-2xl border space-y-1.5 ${verdictStyle.box}`}>
+                        <div className={`flex items-center gap-1.5 text-sm font-extrabold uppercase tracking-wide ${verdictStyle.heading}`}>
+                          <verdictStyle.Icon className="w-4 h-4 shrink-0" />
+                          <span>{verdictStyle.label}</span>
                         </div>
-
-                        <span className="text-[11px] text-neutral-500 font-semibold">
-                          Grounded in: {course.professor}&apos;s Syllabus
-                        </span>
-                      </div>
-
-                      {/* Prominent Explicit Warning if Prohibited (Requirement 5) */}
-                      {isProhibited && (
-                        <div className="p-3.5 bg-[#BA0C2F]/10 border-l-4 border-l-[#BA0C2F] rounded-r-xl flex items-start gap-2.5 text-xs font-bold text-[#BA0C2F]">
-                          <XCircle className="w-4 h-4 text-[#BA0C2F] shrink-0 mt-0.5" />
-                          <div>
-                            <span className="block text-sm font-extrabold uppercase tracking-wide">
-                              NOT ALLOWED
-                            </span>
-                            <span className="font-semibold text-neutral-900 block mt-0.5">
-                              This action is strictly not allowed for this assignment under Ohio State COAM policies.
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Prominent Notice if Subject Tutoring / Study Advice (Requirement 9: Ask Instructor) */}
-                      {isContactInstructor && (
-                        <div className="p-3.5 bg-amber-50/80 border-l-4 border-l-[#BA0C2F] rounded-r-xl flex items-start gap-2.5 text-xs text-neutral-800">
-                          <GraduationCap className="w-4 h-4 text-[#BA0C2F] shrink-0 mt-0.5" />
-                          <div>
-                            <span className="block text-sm font-bold text-neutral-950 uppercase tracking-wide">
-                              I am unsure how to help with this question
-                            </span>
-                            <span className="font-medium text-neutral-700 block mt-0.5">
-                              CompassAI only clarifies course syllabus policies and AI boundaries. For study advice, exam preparation tips, or subject tutoring, please contact your professor or TA.
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Prominent Notice if Out of Scope (Requirements 6 & 7) */}
-                      {isOutOfScope && (
-                        <div className="p-3.5 bg-neutral-100 border-l-4 border-l-neutral-600 rounded-r-xl flex items-start gap-2.5 text-xs text-neutral-800">
-                          <Info className="w-4 h-4 text-neutral-600 shrink-0 mt-0.5" />
-                          <div>
-                            <span className="block text-sm font-bold text-neutral-950 uppercase tracking-wide">
-                              Notice: Question Not Related to App Function
-                            </span>
-                            <span className="font-medium text-neutral-700 block mt-0.5">
-                              CompassAI is designed specifically to answer course policy and AI syllabus questions.
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* The Answer (Requirement 10) */}
-                      <div className="text-sm text-neutral-900 leading-relaxed font-semibold whitespace-pre-line">
-                        {msg.text}
+                        <p className="text-sm text-neutral-900 leading-relaxed font-semibold whitespace-pre-line">
+                          {msg.text}
+                        </p>
+                        {(isContactInstructor || msg.isSure === false) && (
+                          <p className="text-xs text-neutral-700 font-semibold">
+                            Who to ask: {msg.suggestedContact || `${course.professor} or your recitation TA`}
+                          </p>
+                        )}
                       </div>
 
                       {/* Requirement 10: Part of the source it relied on */}
@@ -499,75 +429,19 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
                           </p>
                         )}
                       </div>
-
-                      {/* Requirement 10: If source doesn't cover the question, say so and suggest who to ask instead of guessing */}
-                      {msg.isSure === false && (
-                        <div className="p-3.5 bg-amber-50/90 rounded-2xl border border-amber-300 space-y-2 text-xs">
-                          <div className="flex items-center gap-1.5 font-bold text-amber-950 uppercase tracking-wider">
-                            <HelpCircle className="w-3.5 h-3.5 text-amber-700" />
-                            <span>Source Does Not Cover This Question</span>
-                          </div>
-                          <p className="text-neutral-800">
-                            The syllabus does not contain explicit rules addressing this question. Instead of guessing, please consult your course staff:
-                          </p>
-                          <div className="inline-flex items-center gap-1.5 font-bold text-neutral-900 bg-white px-3 py-1.5 rounded-xl border border-amber-300 shadow-2xs">
-                            <GraduationCap className="w-4 h-4 text-[#BA0C2F]" />
-                            <span>Who to ask: {msg.suggestedContact || `${course.professor} or your recitation TA`}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Checklists for Allowed & Prohibited Activities */}
-                      {msg.metadata && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                          {msg.metadata.allowedUses && msg.metadata.allowedUses.length > 0 && (
-                            <div className="p-3.5 bg-neutral-50 border border-neutral-200 rounded-2xl space-y-2">
-                              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-900 uppercase tracking-wider">
-                                <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>Permitted Activities</span>
-                              </div>
-                              <ul className="space-y-1.5 text-xs text-neutral-700">
-                                {msg.metadata.allowedUses.map((item, idx) => (
-                                  <li key={idx} className="flex items-start gap-1.5">
-                                    <span className="text-emerald-700 font-bold mt-0.5">•</span>
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {msg.metadata.prohibitedUses && msg.metadata.prohibitedUses.length > 0 && (
-                            <div className="p-3.5 bg-[#BA0C2F]/5 border border-[#BA0C2F]/20 rounded-2xl space-y-2">
-                              <div className="flex items-center gap-1.5 text-xs font-bold text-[#BA0C2F] uppercase tracking-wider">
-                                <XCircle className="w-3.5 h-3.5 text-[#BA0C2F]" />
-                                <span>Prohibited Actions</span>
-                              </div>
-                              <ul className="space-y-1.5 text-xs text-neutral-800">
-                                {msg.metadata.prohibitedUses.map((item, idx) => (
-                                  <li key={idx} className="flex items-start gap-1.5">
-                                    <span className="text-[#BA0C2F] font-bold mt-0.5">•</span>
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
                 );
               });
             })()}
 
-            {/* Live Gemini Loading Indicator */}
+            {/* Loading indicator while Compass answers */}
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-white border border-neutral-300 rounded-3xl p-5 sm:p-6 shadow-sm space-y-3 max-w-lg w-full">
                   <div className="flex items-center gap-2 text-xs font-bold text-[#BA0C2F]">
                     <Loader2 className="w-4 h-4 animate-spin text-[#BA0C2F]" />
-                    <span>Consulting {course.code} syllabus via live Gemini call...</span>
+                    <span>Checking the {course.code} syllabus...</span>
                   </div>
                   <div className="space-y-2 pt-1">
                     <div className="h-3.5 bg-neutral-200 rounded-full animate-pulse w-3/4"></div>
@@ -611,7 +485,15 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
 
       {/* Wireframe bottom element: type: [ ... ] prompt bar */}
       {canAsk && (
-      <div className="sticky bottom-3 pt-2">
+      <div className="sticky bottom-3 pt-2 space-y-2">
+        {askError && (
+          <p
+            role="alert"
+            className="text-xs font-semibold text-[#BA0C2F] bg-white border border-[#BA0C2F]/40 rounded-xl px-3 py-2 shadow-xs"
+          >
+            {askError}
+          </p>
+        )}
         <div className="bg-white/95 backdrop-blur-md p-3 sm:p-4 rounded-2xl border-2 border-neutral-300 focus-within:border-[#BA0C2F] shadow-md transition-all">
           <form
             onSubmit={(e) => {
@@ -625,7 +507,8 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
             </div>
             <input
               type="text"
-              placeholder={`Ask Gemini any syllabus policy question about ${assignment.title}...`}
+              placeholder={`Ask whether you can use AI on ${assignment.title}...`}
+              maxLength={500}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               disabled={isLoading}
@@ -643,7 +526,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
                 </>
               ) : (
                 <>
-                  <span>Ask Gemini</span>
+                  <span>Ask Compass</span>
                   <Send className="w-3.5 h-3.5" />
                 </>
               )}
