@@ -70,17 +70,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'Where can I find the official BUSMHR 2292 syllabus?',
-            question: 'Where is the official syllabus posted on CarmenCanvas?',
+            label: 'Can AI quiz me on the syllabus first?',
+            question: 'Can I use AI to quiz me on the syllabus before I take the Syllabus Quiz myself?',
             response: {
-              verdict: 'Course Resource Location',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'The syllabus is posted on Carmen under the Syllabus and Modules tabs at carmen.osu.edu.',
-              allowedUses: [
-                'Accessing the syllabus on carmen.osu.edu'
-              ],
+              policySummary: 'Yes. The course encourages AI as a supplementary study aid; only having AI take the quiz for you is prohibited.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“BUS-MHR 2292 utilizes Canvas to post important information such as the syllabus, grades, announcements, and articles.”',
+              instructorQuote: '“Open notes and taken virtually through Canvas. Designed to ensure students have read the syllabus. AI bots taking the quiz for you is strictly prohibited.”',
             }
           },
           {
@@ -146,17 +144,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'How do I access our Top Hat section join code?',
-            question: 'Where can I find the specific join code for my recitation section?',
+            label: 'Can AI summarize the chapter for Top Hat?',
+            question: 'Can I use AI to summarize the chapter before I answer the Top Hat questions myself?',
             response: {
-              verdict: 'Syllabus Join Table',
-              verdictType: 'allowed',
-              policySummary: 'The join codes and direct enrollment URLs for each recitation section (Rooms 210, 310, Gerlach 285) are listed on pages 4–6 of your syllabus.',
-              allowedUses: [
-                'Enrolling via tophat.com with your section-specific URL'
-              ],
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus doesn’t say whether AI can be used for Top Hat reading questions. Check with your instructor.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Search for our course with the following join code that corresponds with your specific section.”',
+              instructorQuote: '“Embedded chapter reading questions. Must be completed prior to your recitation the following week. 2 points per chapter (22 points total). You may miss one week without penalty.”',
             }
           }
         ]
@@ -206,17 +202,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'Which team numbers present on Week 2 vs Week 3?',
-            question: 'When does my team present our individual oral presentations?',
+            label: 'Can AI help outline and time my speech?',
+            question: 'Can AI help me outline my 2-minute speech and check its timing?',
             response: {
-              verdict: 'Syllabus Schedule Breakdown',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'Teams #1, #2, and #3 present on Wednesday, September 2 (Week 2). Teams #4, #5, and #6 present on Wednesday, September 9 (Week 3).',
-              allowedUses: [
-                'Checking your team number assigned in CarmenCanvas'
-              ],
+              policySummary: 'Yes. AI is permitted for timing and speech outlines, as long as you don’t read an AI script word for word.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Week #2: Team #1, #2, #3 individual presentations. Week #3: Team #4, #5, #6 individual presentations.”',
+              instructorQuote: '“2-minute presentation on your post-college plans (target company, graduate degree, or startup). AI permitted for timing and speech outlines. Reading an AI script verbatim is strictly prohibited.”',
             }
           }
         ]
@@ -268,17 +262,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'What ethical frameworks should we apply in our case?',
-            question: 'Which course ethical frameworks are recommended for our presentation analysis?',
+            label: 'Can AI help us brainstorm case examples?',
+            question: 'Can our group use AI to brainstorm examples of ethical leadership for our case?',
             response: {
-              verdict: 'Course Syllabus Guidance',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'Apply the frameworks from Top Hat Chapter 9 (Morality & Justice) and Chapter 10 (Business Ethics Value), including stakeholder impacts and fiduciary duties.',
-              allowedUses: [
-                'Connecting your chosen case to core lecture concepts'
-              ],
+              policySummary: 'Yes. AI is permitted for brainstorming case examples; the handout and speech must be your own.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“To recognize and understand the intangible value of ethics and integrity to leadership, including decision-making frameworks.”',
+              instructorQuote: '“Pre-assigned group researches and orally presents an example of ethical leadership or failure. Each team member must present. AI permitted for brainstorming case examples; handout and speech must be student-crafted.”',
             }
           }
         ]
@@ -312,31 +304,27 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'How does Big Interview evaluate our resume?',
-            question: 'What does the Big Interview software check on our draft submission?',
+            label: 'Can AI format my resume before Big Interview?',
+            question: 'Can AI help format my resume before Big Interview evaluates it?',
             response: {
-              verdict: 'Automated Feedback Evaluation',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'Big Interview checks standard ATS formatting, keyword relevancy, bullet length, and consistency. You review the diagnostic feedback and submit a revised draft 2.',
-              allowedUses: [
-                'Reviewing the automated scorecard to improve your resume before final submission'
-              ],
+              policySummary: 'Yes. AI is allowed for action verb suggestions and formatting.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Turn in a first and second draft electronically via Canvas and have it evaluated by Big Interview.”',
+              instructorQuote: '“Turn in first and second drafts electronically via Canvas and have it evaluated by Big Interview software. AI allowed for action verb suggestions and formatting.”',
             }
           },
           {
-            label: 'Is there an in-person lecture opportunity this week?',
-            question: 'Is there an extra credit lecture scheduled during Week 6?',
+            label: 'Can AI write my whole resume for me?',
+            question: 'Can AI write my entire resume for me from scratch?',
             response: {
-              verdict: 'Extra Credit Lecture',
-              verdictType: 'allowed',
-              policySummary: 'Yes! Monday, September 28 from 4:30 – 5:15 PM in Schoenbaum 105: "Building a Success System" with Ty Shepfer & Laith Khalaf (Food provided, 1 extra credit point).',
-              allowedUses: [
-                'Attending the guest lecture to earn 1 extra credit point'
-              ],
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus allows AI for action verbs and formatting, but doesn’t say whether AI can write the whole resume. Check with your instructor.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“In-person lecture opportunity in Schoenbaum 105. Food provided. Attendance for 1 extra credit point.”',
+              instructorQuote: '“Turn in first and second drafts electronically via Canvas and have it evaluated by Big Interview software. AI allowed for action verb suggestions and formatting.”',
             }
           }
         ]
@@ -370,33 +358,27 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'What happens if I submit my planning document 5 minutes late?',
-            question: 'Will I lose points if my negotiation strategy document is submitted 5 minutes after recitation begins?',
+            label: 'Can AI help draft my planning document?',
+            question: 'Can I use AI to help draft my negotiation planning document before recitation?',
             response: {
-              verdict: '50% Deduction Enforced',
-              verdictType: 'caution',
-              policySummary: 'Yes. Per syllabus page 11: “Any assignment that is turned in late (including one minute late) will receive a 50% deduction. If not turned in within 24 hours, zero.”',
-              allowedUses: [
-                'Submitting to Canvas at least 30 minutes before your recitation begins'
-              ],
-              prohibitedUses: [
-                'Submitting after the scheduled recitation start time'
-              ],
-              instructorQuote: '“Assignments are due at the beginning of recitation unless otherwise indicated. If you cannot be on time, be early.”',
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus only prohibits real-time AI during the negotiation. Check with your instructor about the planning document.',
+              allowedUses: [],
+              prohibitedUses: [],
+              instructorQuote: '“Planning document submitted electronically to Canvas prior to recitation. Students negotiate head-to-head against counterparts in recitation. Real-time AI during negotiation is prohibited.”',
             }
           },
           {
-            label: 'Is Part 1 planning different from Part 2 execution?',
-            question: 'How are the negotiation points split between planning and execution?',
+            label: 'Can I wear an AI earpiece while negotiating?',
+            question: 'Can I wear an earpiece with an AI coach during the live negotiation?',
             response: {
-              verdict: 'Two-Part Exercise',
-              verdictType: 'allowed',
-              policySummary: 'Week 6 covers Part I: Planning. Week 7 covers Part II: Execution, where the strategy document is submitted and live negotiation occurs.',
-              allowedUses: [
-                'Completing the designated strategy template posted to Canvas'
-              ],
+              verdict: 'NOT ALLOWED — Prohibited Activity',
+              verdictType: 'prohibited',
+              policySummary: 'No. Real-time AI during the negotiation is prohibited.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Negotiation exercise: part II – execution. Negotiation planning document submitted electronically to Canvas prior to recitation.”',
+              instructorQuote: '“Planning document submitted electronically to Canvas prior to recitation. Students negotiate head-to-head against counterparts in recitation. Real-time AI during negotiation is prohibited.”',
             }
           }
         ]
@@ -445,17 +427,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'Where can I get a free professional headshot on campus?',
-            question: 'Does Fisher College of Business provide free professional LinkedIn headshots?',
+            label: 'Can AI write my LinkedIn headline?',
+            question: 'Can AI suggest a professional headline for my LinkedIn profile?',
             response: {
-              verdict: 'Campus Career Resource',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'Yes! The Office of Career Management in Gerlach Hall offers regular free headshot photo booth sessions for Fisher students.',
-              allowedUses: [
-                'Visiting the Gerlach Hall career center for official headshot sessions'
-              ],
+              policySummary: 'Yes. AI is permitted for headline and summary bio suggestions.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Utilize the Office of Career Management resources throughout the term.”',
+              instructorQuote: '“Complete a professional LinkedIn profile and submit the link electronically to Canvas prior to recitation. AI permitted for headline and summary bio suggestions.”',
             }
           }
         ]
@@ -504,17 +484,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'What topics are covered on Exam #1?',
-            question: 'Which textbook chapters and lecture topics are tested on Exam #1?',
+            label: 'Can I bring a smartwatch with AI to Exam #1?',
+            question: 'Can I wear a smartwatch with an AI assistant during Exam #1?',
             response: {
-              verdict: 'Syllabus Content Scope',
-              verdictType: 'allowed',
-              policySummary: 'Exam #1 covers lecture and Top Hat readings from Weeks 1–8: Business Fundamentals, Communication, Teamwork Dynamics, Morality & Justice, Business Ethics, Negotiation, Leadership, and CSR.',
-              allowedUses: [
-                'Reviewing lecture video modules and Top Hat chapters 1, 2, 3, 5, 6, 7, 9, 10, 11'
-              ],
+              verdict: 'NOT ALLOWED — Prohibited Activity',
+              verdictType: 'prohibited',
+              policySummary: 'No. Zero AI or electronic devices are permitted during the exam.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Multiple-choice exams to assess your comprehension of assigned reading materials and lecture content.”',
+              instructorQuote: '“Closed book and closed note multiple-choice exam taken during regularly scheduled recitation. Zero AI or electronic devices permitted. Exam cannot be dropped.”',
             }
           }
         ]
@@ -547,17 +525,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'Where do I find the survey course code?',
-            question: 'Where is the course code needed for the leadership assessment survey located?',
+            label: 'Can AI take the leadership survey for me?',
+            question: 'Can I ask an AI to take the 20-minute leadership survey in my place?',
             response: {
-              verdict: 'Canvas Assignments Tab',
-              verdictType: 'allowed',
-              policySummary: 'The survey access code is published in the Assignments tab of Canvas under "Leadership Assessment Survey".',
-              allowedUses: [
-                'Entering the Canvas course code during survey setup'
-              ],
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus doesn’t mention AI for the leadership survey. Check with your instructor; it’s meant to reflect you.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Be sure to use the course code (found in the assignments tab of Canvas).”',
+              instructorQuote: '“Complete the 360-degree Leadership Assessment Survey (approx 20 minutes) and upload survey results to Canvas using the course code.”',
             }
           },
           {
@@ -604,31 +580,27 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'How do I schedule my appointment at Gerlach Hall?',
-            question: 'Where can I book my Career Management appointment?',
+            label: 'Can an AI attend my career meeting for me?',
+            question: 'Can I send an AI avatar to my Career Management meeting instead of going myself?',
             response: {
-              verdict: 'FisherConnect / Handshake Portal',
-              verdictType: 'allowed',
-              policySummary: 'Log into Handshake using your OSU credentials and select Appointments -> Fisher College of Business Career Management.',
-              allowedUses: [
-                'Scheduling early in the term before peak recruiting periods'
-              ],
+              verdict: 'NOT ALLOWED — Prohibited Activity',
+              verdictType: 'prohibited',
+              policySummary: 'No. The meeting is in person and cannot be simulated or replaced with AI.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Appointment with the Office of Career Management must be completed.”',
+              instructorQuote: '“Meet with a representative from the Fisher Office of Career Management. In-person meeting required; cannot be simulated or replaced with AI.”',
             }
           },
           {
-            label: 'What materials should I bring to the career meeting?',
-            question: 'What should I prepare for my career management appointment?',
+            label: 'Can I practice with AI before the meeting?',
+            question: 'Can I use AI to practice interview answers before my Career Management meeting?',
             response: {
-              verdict: 'Preparation Checklist',
-              verdictType: 'allowed',
-              policySummary: 'Bring a printed or digital copy of your revised resume draft, your target industry interests, and questions about upcoming Fisher career fairs.',
-              allowedUses: [
-                'Asking about internship recruiting timelines and alumni networking'
-              ],
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus only says the meeting can’t be replaced with AI. Check with your instructor about practicing with AI beforehand.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Develop skills and strategies needed to attain career goals.”',
+              instructorQuote: '“Meet with a representative from the Fisher Office of Career Management. In-person meeting required; cannot be simulated or replaced with AI.”',
             }
           }
         ]
@@ -681,17 +653,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'Who needs to upload the crisis presentation to Canvas?',
-            question: 'Does every group member upload the crisis presentation slides to Canvas?',
+            label: 'Can AI help us draft PR messages for the crisis?',
+            question: 'Can our team use AI to explore different PR communication angles for our crisis response?',
             response: {
-              verdict: 'Single Team Submission',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'Per syllabus Week 11: One designated person from each team must upload the presentation slides to Canvas before your recitation begins.',
-              allowedUses: [
-                'Selecting one team member to upload the final slides to Canvas'
-              ],
+              policySummary: 'Yes. AI tools are welcomed as aids for exploring scenario dynamics, PR communication angles, and stakeholder matrices; the live presentation and Q&A must be student-executed.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“One person from each team must upload their presentation to Canvas.”',
+              instructorQuote: '“Leadership team in crisis simulation. AI tools welcomed as aids for exploring scenario dynamics, PR communication angles, and stakeholder matrices. Live presentation delivery and Q&A defense must be student-executed.”',
             }
           }
         ]
@@ -724,17 +694,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'What does QUIC certification qualify Fisher students for?',
-            question: 'Why is QUIC completion important for Fisher business students?',
+            label: 'Can AI explain a QUIC topic I missed?',
+            question: 'Can AI explain a QUIC module topic I didn’t understand, if I complete the module myself?',
             response: {
-              verdict: 'Career Milestone',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'QUIC certification unlocks access to on-campus interviews with Fortune 500 employers through FisherConnect and Handshake.',
-              allowedUses: [
-                'Completing all modules before spring recruiting cycles'
-              ],
+              policySummary: 'Yes, as a study aid, as long as you complete the modules yourself. Automated quiz solving is prohibited.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Develop skills and strategies needed to attain career goals.”',
+              instructorQuote: '“Complete the QUIC interview certification modules as assigned by the Office of Career Management. Automated quiz solving is prohibited.”',
             }
           },
           {
@@ -800,17 +768,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'When does the final showcase competition take place?',
-            question: 'When is the showcase final presentation event in Schoenbaum Hall?',
+            label: 'Can AI help research market trends?',
+            question: 'Can our team use AI to research market trends for our business pitch?',
             response: {
-              verdict: 'Showcase Event Schedule',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'Thursday, December 10 from 10:00 AM – 12:00 PM in Schoenbaum 105. Attending earns 1 extra credit point.',
-              allowedUses: [
-                'Attending the showcase to support peers and earn extra credit'
-              ],
+              policySummary: 'Yes. AI is encouraged for customer discovery ideation, market research trends, and pitch deck structuring.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Business pitch competition final presentations in Schoenbaum 105. Attendance will earn you 1 extra credit point.”',
+              instructorQuote: '“Pre-assigned group pitches a business solution to a current market challenge. AI encouraged for customer discovery ideation, market research trends, and pitch deck structuring. Your team must pitch and defend your original business solution.”',
             }
           }
         ]
@@ -842,31 +808,27 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'What material is tested on Exam #2?',
-            question: 'Does Exam #2 test the entire semester or only the second half?',
+            label: 'Can I use an AI calculator app on Exam #2?',
+            question: 'Can I use a calculator app with AI features during Exam #2?',
             response: {
-              verdict: 'Exam #2 Content Scope',
-              verdictType: 'allowed',
-              policySummary: 'Exam #2 focuses primarily on content from Weeks 9–16: Crisis Leadership, Entrepreneurship, Playing to Our Strengths, and course wrap-up concepts.',
-              allowedUses: [
-                'Reviewing Top Hat Chapters 4, 8, 12 and recitation case discussions'
-              ],
+              verdict: 'NOT ALLOWED — Prohibited Activity',
+              verdictType: 'prohibited',
+              policySummary: 'No. Zero outside devices are permitted during the exam.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“Multiple-choice exams to assess your comprehension of assigned reading materials and lecture content.”',
+              instructorQuote: '“Closed book and closed note multiple-choice exam taken during regularly scheduled recitation. Zero outside devices permitted. Final exam score cannot be dropped.”',
             }
           },
           {
-            label: 'When is the peer-to-peer team evaluation due?',
-            question: 'When must the final peer-to-peer group evaluation form be submitted?',
+            label: 'Can AI make practice questions for Exam #2?',
+            question: 'Can I use AI to make practice questions while I study for Exam #2?',
             response: {
-              verdict: 'Mandatory Peer Review Due Date',
-              verdictType: 'allowed',
-              policySummary: 'Due electronically to Canvas prior to recitation on Wednesday, December 9 (Week 16). This determines your 20 group contribution points.',
-              allowedUses: [
-                'Submitting honest, constructive peer reviews of your group members'
-              ],
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus only says no outside devices during the exam. Check with your instructor about studying with AI beforehand.',
+              allowedUses: [],
               prohibitedUses: [],
-              instructorQuote: '“DUE: peer-to-peer evaluation form submitted electronically to Canvas prior to recitation.”',
+              instructorQuote: '“Closed book and closed note multiple-choice exam taken during regularly scheduled recitation. Zero outside devices permitted. Final exam score cannot be dropped.”',
             }
           }
         ]
@@ -929,19 +891,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'COAM referral procedure for CSE 2221',
-            question: 'What is the procedure if a homework is flagged by COAM?',
+            label: 'Can I ask AI to explain recursion first?',
+            question: 'Can I ask an AI to explain recursion in general before I start Homework 1?',
             response: {
-              verdict: 'Official OSU COAM Protocol',
-              verdictType: 'prohibited',
-              policySummary: 'No unauthorized AI is tolerated. Faculty are required by university rule 3335-23-04 to forward suspected unauthorized AI use directly to COAM for formal hearing.',
-              allowedUses: [
-                'Submitting 100% original Java code'
-              ],
-              prohibitedUses: [
-                'Sharing or generating solutions with LLMs'
-              ],
-              instructorQuote: '“Instructors do not handle misconduct informally; all cases go straight to the Committee on Academic Misconduct.”',
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'This homework allows no LLM prompts or AI code generators; general study before you start isn’t covered. Check with your instructor.',
+              allowedUses: [],
+              prohibitedUses: [],
+              instructorQuote: '“Initial homework sets establish fundamental recursive reasoning. No LLM prompts or AI code generators allowed.”',
             }
           }
         ]
@@ -1106,19 +1064,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'What does Carmen quiz log monitoring flag?',
-            question: 'Does Carmen track browser tabs or AI extension activity during quizzes?',
+            label: 'Can I keep an AI tab open during the quiz?',
+            question: 'Can I keep an AI chat open in another browser tab during Lab Quiz 4?',
             response: {
-              verdict: 'Automated Audit Active',
-              verdictType: 'caution',
-              policySummary: 'Yes, CarmenCanvas logs tab unfocus events, copy-paste events, and extension execution timestamps.',
-              allowedUses: [
-                'Taking the quiz in a single focused browser window'
-              ],
-              prohibitedUses: [
-                'Opening secondary tabs with ChatGPT or AI extensions'
-              ],
-              instructorQuote: '“Tab navigation timestamps during exams are reviewed when irregularities occur.”',
+              verdict: 'NOT ALLOWED — Prohibited Activity',
+              verdictType: 'prohibited',
+              policySummary: 'No. Zero outside assistance or AI is allowed during the quiz window.',
+              allowedUses: [],
+              prohibitedUses: [],
+              instructorQuote: '“In-lab timed quiz. Zero outside assistance or AI allowed during CarmenCanvas quiz windows.”',
             }
           },
           {
@@ -1319,19 +1273,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'OSU Writing Center appointment booking',
-            question: 'Where can I get legitimate human feedback on campus for Essay 1?',
+            label: 'Can AI fix grammar in my own narrative?',
+            question: 'Can AI fix the grammar in a literacy narrative I wrote myself?',
             response: {
-              verdict: 'Approved Campus Writing Center',
-              verdictType: 'allowed',
-              policySummary: 'The Center for the Study and Teaching of Writing (CSTW) offers free 45-minute peer tutoring appointments in Smith Lab 4120.',
-              allowedUses: [
-                'Booking a session at cstw.osu.edu for one-on-one writing coaching'
-              ],
-              prohibitedUses: [
-                'Paying online editing services or using AI text spinners'
-              ],
-              instructorQuote: '“CSTW tutors are trained Ohio State peers who will help you find your voice.”',
+              verdict: 'NOT ALLOWED — Prohibited Activity',
+              verdictType: 'prohibited',
+              policySummary: 'No. Zero generative AI prose is permitted in this essay.',
+              allowedUses: [],
+              prohibitedUses: [],
+              instructorQuote: '“Your personal lived experience cannot be outsourced to a machine. Zero generative AI prose permitted.”',
             }
           }
         ]
@@ -1444,19 +1394,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'How to verify real DOIs through OSU Library',
-            question: 'Where can I verify that my journal articles exist in Ohio State collections?',
+            label: 'Can I use AI-suggested sources if verified?',
+            question: 'Can I use sources an AI suggested if I verify each one through OSU University Libraries?',
             response: {
-              verdict: 'Approved OSU Portal',
+              verdict: 'Permitted Within Course Rules',
               verdictType: 'allowed',
-              policySummary: 'Use the University Libraries catalog search at library.osu.edu or OhioLINK to confirm holdings.',
-              allowedUses: [
-                'Downloading the full-text PDF directly through OSU login'
-              ],
-              prohibitedUses: [
-                'Trusting AI-generated bibliography lists without checking the PDF'
-              ],
-              instructorQuote: '“Never cite a source you have not opened and evaluated with your own eyes.”',
+              policySummary: 'Yes, if you verify every source through OSU University Libraries, as the syllabus requires.',
+              allowedUses: [],
+              prohibitedUses: [],
+              instructorQuote: '“LLMs hallucinate academic DOIs, journal volumes, and author quotes. All sources must be verified via OSU University Libraries search.”',
             }
           }
         ]
@@ -1488,36 +1434,27 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'Peer review rubric guidelines',
-            question: 'What rubric questions should I focus on when reviewing my partner’s paper?',
+            label: 'Can AI check my revision plan for typos?',
+            question: 'Can I use AI to check my own revision plan for typos?',
             response: {
-              verdict: 'Course Rubric Guidance',
-              verdictType: 'allowed',
-              policySummary: 'Evaluate thesis clarity, evidence integration, transitions, and rhetorical awareness as outlined in the Carmen rubric.',
-              allowedUses: [
-                'Following the 4-part critique prompt in Carmen Canvas'
-              ],
-              prohibitedUses: [
-                'Providing 1-sentence vague comments'
-              ],
-              instructorQuote: '“Constructive, detailed feedback is the most generous gift you can offer a fellow writer.”',
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus only says automated AI peer reviews aren’t accepted. Check with your instructor about using AI on your own revision plan.',
+              allowedUses: [],
+              prohibitedUses: [],
+              instructorQuote: '“Peer feedback must be exchanged between registered OSU students in Carmen groups. Automated AI peer reviews are not accepted.”',
             }
           },
           {
-            label: 'What if my partner’s draft looks AI-generated?',
-            question: 'What should I do if my peer review partner’s paper looks like it was written by ChatGPT?',
+            label: 'Can I run my partner’s draft through an AI detector?',
+            question: 'Can I run my peer review partner’s draft through an AI detector?',
             response: {
-              verdict: 'Confidential Instructor Notice',
-              verdictType: 'caution',
-              policySummary: 'Complete your peer feedback constructively, and privately mention your concern to Prof. Hilliard during office hours.',
-              allowedUses: [
-                'Focusing on specific rhetorical suggestions in your written comments',
-                'Reaching out to the instructor privately'
-              ],
-              prohibitedUses: [
-                'Accusing classmates publicly in Carmen discussion boards'
-              ],
-              instructorQuote: '“Let the instructional team handle integrity questions with care and confidentiality.”',
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus doesn’t cover AI detectors. Check with your instructor before uploading a classmate’s work anywhere.',
+              allowedUses: [],
+              prohibitedUses: [],
+              instructorQuote: '“Peer feedback must be exchanged between registered OSU students in Carmen groups. Automated AI peer reviews are not accepted.”',
             }
           }
         ]
@@ -1640,19 +1577,15 @@ export const COURSES: Course[] = [
             }
           },
           {
-            label: 'Where is the Cockins Hall Stats Help Room?',
-            question: 'Where can I get in-person statistics help at Ohio State?',
+            label: 'Can AI check my handwritten derivation?',
+            question: 'Can AI check my handwritten derivation for mistakes after I finish it myself?',
             response: {
-              verdict: 'Approved OSU Resource',
-              verdictType: 'allowed',
-              policySummary: 'The Statistics Department Math/Stat Help Room is located in Cockins Hall Room 132, open Monday through Friday.',
-              allowedUses: [
-                'Drop-in free tutoring with statistics graduate teaching associates'
-              ],
-              prohibitedUses: [
-                'Using paid online homework solver bots'
-              ],
-              instructorQuote: '“Cockins Hall tutors are graduate statisticians who love walking students through distributions.”',
+              verdict: 'Ask Your Instructor',
+              verdictType: 'contact_instructor',
+              policySummary: 'The syllabus requires full handwritten derivations and gives zero credit for AI solutions without work. Check with your instructor about AI checking your work.',
+              allowedUses: [],
+              prohibitedUses: [],
+              instructorQuote: '“All binomial and Poisson formulas must show complete handwritten algebraic derivations. AI solutions without work receive zero credit.”',
             }
           }
         ]
