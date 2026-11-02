@@ -59,6 +59,17 @@ export const PolicyBadge: React.FC<PolicyBadgeProps> = ({
         </span>
       );
 
+    case 'allowed':
+      return (
+        <span
+          className={`inline-flex items-center rounded-lg bg-emerald-50 border border-emerald-700 text-emerald-900 shrink-0 whitespace-nowrap shadow-2xs ${sizeClasses[size]}`}
+          title="AI use is allowed for this assignment"
+        >
+          <CheckCircle2 className={`${iconSizes[size]} text-emerald-700 shrink-0`} />
+          <span>{label || 'Allowed'}</span>
+        </span>
+      );
+
     case 'allowed_with_disclosure':
       return (
         <span

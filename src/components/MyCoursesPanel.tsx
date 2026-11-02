@@ -12,7 +12,16 @@ import {
 import { submitWithoutReset } from '@/components/auth/fields';
 
 /** "Have a course code?" box and the student's My Courses list. Hidden for instructors. */
-export function MyCoursesPanel({ role }: { role: 'student' | 'instructor' | null }) {
+export function MyCoursesPanel({
+  role,
+  onOpenCourse,
+  openingCourseId = null,
+}: {
+  role: 'student' | 'instructor' | null;
+  /** Opens a saved course's policy table. */
+  onOpenCourse?: (courseId: string) => void;
+  openingCourseId?: string | null;
+}) {
   const [courses, setCourses] = useState<MyCourse[] | null>(null);
   const [loadError, setLoadError] = useState<string>();
   const [removeError, setRemoveError] = useState<string>();
@@ -68,12 +77,21 @@ export function MyCoursesPanel({ role }: { role: 'student' | 'instructor' | null
         <ul className="divide-y divide-neutral-200 border border-neutral-200 rounded-xl">
           {courses.map((c) => (
             <li key={c.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-neutral-950">{c.code ?? 'Course'}</div>
+              <button
+                type="button"
+                onClick={() => onOpenCourse?.(c.id)}
+                disabled={!onOpenCourse || openingCourseId !== null}
+                className="min-w-0 flex-1 text-left rounded-lg -m-1 p-1 hover:bg-neutral-50 cursor-pointer disabled:cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]"
+                aria-label={`Open ${c.code ?? 'course'}${c.name ? `, ${c.name}` : ''}`}
+              >
+                <div className="text-sm font-bold text-neutral-950 flex items-center gap-2">
+                  {c.code ?? 'Course'}
+                  {openingCourseId === c.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#BA0C2F]" aria-hidden="true" />}
+                </div>
                 <div className="text-xs text-neutral-700 truncate">
                   {[c.name, c.professor, c.term].filter(Boolean).join(' · ')}
                 </div>
-              </div>
+              </button>
               <button
                 type="button"
                 disabled={removingId === c.id}

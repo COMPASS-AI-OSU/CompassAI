@@ -6,13 +6,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Course, Assignment, StudentProfile, RecentSession, SessionUser } from '@/types';
-import { COURSES } from '@/data/courses';
+import { Course, Assignment, CourseSummary, StudentProfile, SessionUser } from '@/types';
+import { getPublishedCourse } from '@/app/student-courses/actions';
 import { Header } from './Header';
 import { StepBreadcrumb } from './StepBreadcrumb';
 import { Screen1Courses } from './Screen1Courses';
 import { Screen2Assignments } from './Screen2Assignments';
 import { Screen3Compass } from './Screen3Compass';
+import { CourseSwitcher } from './CourseSwitcher';
 
 /** "smith.123@osu.edu" becomes "Smith". We only collect an email, so the name comes from it. */
 function nameFromEmail(email: string): string {
@@ -25,31 +26,56 @@ function profileFor(user: SessionUser | null): StudentProfile {
   return { id: user.id, name: nameFromEmail(user.email), email: user.email, major: '', year: '' };
 }
 
-export default function CompassApp({ user }: { user: SessionUser | null }) {
+export default function CompassApp({
+  user,
+  initialCourses,
+  coursesError,
+}: {
+  user: SessionUser | null;
+  /** Every published course, loaded on the server (#14). */
+  initialCourses: CourseSummary[];
+  coursesError?: string;
+}) {
   const [currentScreen, setCurrentScreen] = useState<1 | 2 | 3>(1);
-  const [courses] = useState<Course[]>(COURSES);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(COURSES[0]);
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(
-    COURSES[0].assignments[0] // Default to Crisis Case Preparation & Execution
-  );
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
+  const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const currentStudent = profileFor(user);
-  // The "Pick Up Where You Left Off" card is hidden until issue #23 shows each student's real
-  // last conversation; the prototype's sample session made every student see the same fake one.
-  const [recentSession, setRecentSession] = useState<RecentSession | null>(null);
 
-  // Navigation handlers
-  const handleSelectCourse = (course: Course) => {
-    setSelectedCourse(course);
-    if (course.assignments.length > 0) {
-      setSelectedAssignment(course.assignments[0]);
+  const goTo = (screen: 1 | 2 | 3) => {
+    setCurrentScreen(screen);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  /**
+   * Loads a published course with its confirmed assignments. With `then`, moves to that
+   * screen once it's loaded; otherwise stays put (the Compass screen falls back to the
+   * policy table if the new course has no assignments yet).
+   */
+  const loadCourse = async (courseId: string, then?: 2 | 3) => {
+    if (loadingCourseId) return;
+    setLoadingCourseId(courseId);
+    setLoadError(null);
+    try {
+      const { course, error } = await getPublishedCourse(courseId);
+      if (!course) {
+        setLoadError(error ?? 'This course isn’t available anymore. Your instructor may have unpublished it.');
+        return;
+      }
+      setSelectedCourse(course);
+      setSelectedAssignment(course.assignments[0] ?? null);
+      if (then) goTo(then);
+      else if (currentScreen === 3 && course.assignments.length === 0) goTo(2);
+    } catch {
+      setLoadError('We couldn’t load this course. Check your connection and try again.');
+    } finally {
+      setLoadingCourseId(null);
     }
   };
 
   const handleContinueToAssignments = () => {
-    if (selectedCourse) {
-      setCurrentScreen(2);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (selectedCourse) goTo(2);
   };
 
   const handleSelectAssignment = (assignment: Assignment) => {
@@ -58,80 +84,41 @@ export default function CompassApp({ user }: { user: SessionUser | null }) {
 
   const handleContinueToCompass = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
-    setCurrentScreen(3);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleBackToCourses = () => {
-    setCurrentScreen(1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleBackToAssignments = () => {
-    setCurrentScreen(2);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleResumeRecent = () => {
-    if (!recentSession) return;
-    const course = courses.find((c) => c.id === recentSession.courseId);
-    if (course) {
-      setSelectedCourse(course);
-      const assignment = course.assignments.find((a) => a.id === recentSession.assignmentId);
-      if (assignment) {
-        setSelectedAssignment(assignment);
-      }
-      setCurrentScreen(3);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handleSaveRecentSession = (questionSnippet: string) => {
-    if (selectedCourse && selectedAssignment) {
-      setRecentSession({
-        courseId: selectedCourse.id,
-        assignmentId: selectedAssignment.id,
-        lastActive: 'Just now',
-        questionSnippet,
-      });
-    }
+    goTo(3);
   };
 
   const handleDirectNavigation = (screen: 1 | 2 | 3) => {
-    if (screen === 1) {
-      setCurrentScreen(1);
-    } else if (screen === 2 && selectedCourse) {
-      setCurrentScreen(2);
-    } else if (screen === 3 && selectedCourse && selectedAssignment) {
-      setCurrentScreen(3);
-    }
+    if (screen === 1) goTo(1);
+    else if (screen === 2 && selectedCourse) goTo(2);
+    else if (screen === 3 && selectedCourse && selectedAssignment) goTo(3);
   };
+
+  // Course switcher on the Policy and Compass screens: lists the student's My Courses.
+  const switcher = selectedCourse && (
+    <CourseSwitcher
+      role={user?.role ?? null}
+      current={{ id: selectedCourse.id, code: selectedCourse.code, name: selectedCourse.name }}
+      loading={loadingCourseId !== null}
+      error={currentScreen !== 1 ? loadError : null}
+      onSwitch={(id) => loadCourse(id)}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-neutral-100 text-neutral-900 flex flex-col font-sans antialiased selection:bg-[#BA0C2F]/20 selection:text-neutral-950">
       {/* Top Application Bar */}
-      <Header
-        currentScreen={currentScreen}
-        onNavigateScreen={handleDirectNavigation}
-        user={user}
-      />
+      <Header currentScreen={currentScreen} onNavigateScreen={handleDirectNavigation} user={user} />
 
       {/* Breadcrumb & Quick Stepper with Back Button */}
       <StepBreadcrumb
         currentScreen={currentScreen}
-        onBack={
-          currentScreen === 2
-            ? handleBackToCourses
-            : currentScreen === 3
-            ? handleBackToAssignments
-            : undefined
-        }
+        onBack={currentScreen === 2 ? () => goTo(1) : currentScreen === 3 ? () => goTo(2) : undefined}
         backLabel={
           currentScreen === 2
             ? 'Back to OSU Courses'
             : currentScreen === 3
-            ? `Back to ${selectedCourse?.code || 'Course'} Policies`
-            : 'Back'
+              ? `Back to ${selectedCourse?.code || 'Course'} Policies`
+              : 'Back'
         }
         courseCode={selectedCourse?.code}
         assignmentTitle={selectedAssignment?.title}
@@ -140,41 +127,48 @@ export default function CompassApp({ user }: { user: SessionUser | null }) {
       {/* Main Content Area (responsive: works on phones and laptops) */}
       <main className="flex-1 flex flex-col items-center justify-start py-4 sm:py-6 px-2 sm:px-4">
         <div className="w-full max-w-5xl">
-          {/* SCREEN 1: Course Selection matching IMG_5271.JPG */}
+          {/* SCREEN 1: Course Selection */}
           {currentScreen === 1 && (
             <Screen1Courses
               student={currentStudent}
               role={user?.role ?? null}
-              courses={courses}
-              selectedCourse={selectedCourse}
-              onSelectCourse={handleSelectCourse}
+              courses={initialCourses}
+              coursesError={coursesError}
+              selectedCourseId={selectedCourse?.id ?? null}
+              loadingCourseId={loadingCourseId}
+              loadError={loadError}
+              onSelectCourse={(id) => loadCourse(id)}
+              onOpenCourse={(id) => loadCourse(id, 2)}
               onContinue={handleContinueToAssignments}
-              recentSession={null /* hidden until #23 */}
-              onResumeRecent={handleResumeRecent}
             />
           )}
 
-          {/* SCREEN 2: Assignment Policy Table matching IMG_5272.JPG */}
+          {/* SCREEN 2: Assignment Policy Table */}
           {currentScreen === 2 && selectedCourse && (
             <Screen2Assignments
               course={selectedCourse}
               selectedAssignment={selectedAssignment}
               onSelectAssignment={handleSelectAssignment}
-              onBack={handleBackToCourses}
+              onBack={() => goTo(1)}
               onContinueToCompass={handleContinueToCompass}
+              courseSwitcher={switcher}
             />
           )}
 
-          {/* SCREEN 3: CompassAI Interactive Guidance matching IMG_5273.JPG */}
+          {/* SCREEN 3: Compass chat. Keyed by course so switching courses starts a fresh chat. */}
           {currentScreen === 3 && selectedCourse && selectedAssignment && (
             <Screen3Compass
+              key={selectedCourse.id}
               course={selectedCourse}
               assignment={selectedAssignment}
               student={currentStudent}
               isSignedIn={user !== null}
-              onBack={handleBackToAssignments}
+              onBack={() => goTo(2)}
               onSwitchAssignment={handleSelectAssignment}
-              onSaveRecentSession={handleSaveRecentSession}
+              onSaveRecentSession={() => {
+                /* "Pick up where you left off" comes with #23 */
+              }}
+              courseSwitcher={switcher}
             />
           )}
         </div>
@@ -188,9 +182,7 @@ export default function CompassApp({ user }: { user: SessionUser | null }) {
             <span className="text-neutral-300">·</span>
             <span className="font-medium text-neutral-700">The Ohio State University COAM Syllabus Companion</span>
           </div>
-          <div className="text-[11px] text-neutral-500 font-medium">
-            Scarlet & Gray Prototype · Courses → Policy Table → Compass Chat
-          </div>
+          <div className="text-[11px] text-neutral-500 font-medium">Courses → Policy Table → Compass Chat</div>
         </div>
       </footer>
     </div>

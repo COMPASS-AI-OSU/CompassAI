@@ -1,33 +1,21 @@
-export type AIPolicyStatus = 'strictly_prohibited' | 'partial_allowed' | 'study_prep_only' | 'allowed_with_disclosure';
+export type AIPolicyStatus = 'allowed' | 'allowed_with_disclosure' | 'partial_allowed' | 'strictly_prohibited' | 'study_prep_only';
 
+/** A suggested question on the Compass screen. */
 export interface QuickPrompt {
-  label: string; // The short text for button [X], [Y], [Z]
+  label: string;
   question: string;
-  response: {
-    verdict: string;
-    verdictType: 'allowed' | 'prohibited' | 'caution' | 'out_of_scope' | 'contact_instructor';
-    policySummary: string;
-    allowedUses: string[];
-    prohibitedUses: string[];
-    instructorQuote: string;
-    citationTip?: string;
-    sourceReliedOn?: string;
-    isSure?: boolean;
-    sureReason?: string;
-    suggestedContact?: string;
-  };
 }
 
 export interface Assignment {
   id: string;
   title: string;
   dueDate: string;
-  dueDateTimestamp?: number; // Epoch timestamp for chronological sorting
+  dueDateTimestamp?: number; // For sorting by due date; assignments with no date sort last
   aiStatus: AIPolicyStatus;
   aiStatusLabel: string;
   instructorComment: string;
   syllabusClause?: string;
-  quickPrompts: [QuickPrompt, QuickPrompt, QuickPrompt]; // Wireframe shows 3 buttons: X, Y, Z
+  quickPrompts: QuickPrompt[];
 }
 
 export interface Course {
@@ -38,7 +26,18 @@ export interface Course {
   department: string;
   term: string;
   overallPolicy: string;
+  officeHours?: string;
   assignments: Assignment[];
+}
+
+/** A published course in the Courses list, before its assignments are loaded. */
+export interface CourseSummary {
+  id: string;
+  code: string | null;
+  name: string | null;
+  term: string | null;
+  professor: string | null;
+  assignmentCount: number;
 }
 
 export interface ChatMessage {

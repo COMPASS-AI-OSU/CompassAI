@@ -1,5 +1,7 @@
 # AI step: Ask Compass (#17)
 
+> **Update (#14):** the sample courses in `src/data/courses.ts` were removed. Compass now answers from published courses in the database: the course-wide AI policy, the assignment's syllabus quote, and the instructor's AI level and comment. To re-run these test cases, import and publish a course first.
+
 > Draft written from our issues and the sample syllabus data. Check it against our Foundations 1 spec and fix anything that differs.
 
 ## What it does

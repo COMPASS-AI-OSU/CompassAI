@@ -26,6 +26,8 @@ interface Screen3CompassProps {
   onBack: () => void;
   onSwitchAssignment?: (assignment: Assignment) => void;
   onSaveRecentSession: (questionSnippet: string) => void;
+  /** "Course" dropdown listing My Courses (#14). */
+  courseSwitcher?: React.ReactNode;
 }
 
 export const Screen3Compass: React.FC<Screen3CompassProps> = ({
@@ -36,6 +38,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
   onBack,
   onSwitchAssignment,
   onSaveRecentSession,
+  courseSwitcher,
 }) => {
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -173,7 +176,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
 
   // Sort assignments strictly by due date
   const sortedAssignments = [...course.assignments].sort(
-    (a, b) => (a.dueDateTimestamp || 0) - (b.dueDateTimestamp || 0)
+    (a, b) => (a.dueDateTimestamp ?? Number.MAX_SAFE_INTEGER) - (b.dueDateTimestamp ?? Number.MAX_SAFE_INTEGER)
   );
 
   return (
@@ -231,6 +234,8 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
           </span>
         </div>
       </div>
+
+      {courseSwitcher}
 
       {/* Assignment Quick Switcher (Listed in Chronological Due Date Order) */}
       {onSwitchAssignment && sortedAssignments.length > 1 && (

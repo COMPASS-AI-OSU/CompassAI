@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
-import { COURSES } from "@/data/courses";
+import { getPublishedCourse } from "@/app/student-courses/actions";
+import { NO_COURSE_POLICY } from "@/lib/student-course";
 import { getCurrentUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -43,19 +44,27 @@ export async function POST(request: Request) {
     );
   }
 
-  // The syllabus text comes from our own data, never from the browser.
-  const course = COURSES.find((c) => c.id === body?.courseId);
+  // The syllabus text comes from the database, never from the browser (#14): only a
+  // published course and its confirmed assignments, in the instructor's own words.
+  const { course } =
+    typeof body?.courseId === "string" ? await getPublishedCourse(body.courseId) : { course: null };
   const assignment = course?.assignments.find((a) => a.id === body?.assignmentId);
   if (!course || !assignment) {
-    return Response.json({ error: "We couldn't find that assignment." }, { status: 404 });
+    return Response.json(
+      { error: "We couldn't find that assignment. Your instructor may have unpublished it." },
+      { status: 404 }
+    );
   }
 
   const sourceText = buildSourceText({
     courseCode: course.code,
     assignmentTitle: assignment.title,
-    overallPolicy: course.overallPolicy,
+    overallPolicy: course.overallPolicy === NO_COURSE_POLICY ? "" : course.overallPolicy,
     syllabusClause: assignment.syllabusClause,
-    instructorComment: assignment.instructorComment,
+    // The instructor's AI level for this assignment is part of their rules.
+    instructorComment: [`AI level: ${assignment.aiStatusLabel}.`, assignment.instructorComment]
+      .filter(Boolean)
+      .join(" "),
   });
   // A new syllabus text, prompt or model means a new answer; anything else reuses the saved one.
   const sourceHash = createHash("sha256")

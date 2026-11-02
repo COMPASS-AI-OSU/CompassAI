@@ -44,3 +44,5 @@ Run on 2026-10-27 from localhost, prompt version 2, `claude-haiku-5-5`. (Version
 **Not yet checked:** a real scanned PDF (no text layer), a 10 MB PDF on the live site, and a syllabus over ~100 pages.
 
 **Prompt version 3 (2026-10-28):** also extracts the professor's name for #11's course search. Re-ran test 1: "Prof. Ty Shepfer", all 14 assignments, 28 s.
+
+**Note (#14):** `src/data/courses.ts` has since been removed. The test PDFs above were made from it before it was deleted; it's still in git history.

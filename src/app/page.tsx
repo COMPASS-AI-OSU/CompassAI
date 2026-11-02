@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import CompassApp from '@/components/CompassApp';
 import { getCurrentUser } from '@/lib/auth';
+import { listPublishedCourses } from '@/app/student-courses/actions';
 
 export default function Home() {
   return (
@@ -12,7 +13,9 @@ export default function Home() {
 
 async function HomeContent() {
   const user = await getCurrentUser();
-  return <CompassApp user={user} />;
+  // Every published course, so the Courses screen shows them without a spinner (#14).
+  const { courses, error } = await listPublishedCourses();
+  return <CompassApp user={user} initialCourses={courses} coursesError={error} />;
 }
 
 function HomeLoading() {
