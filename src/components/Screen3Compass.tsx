@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Course, Assignment, StudentProfile, ChatMessage } from '../types';
-import { CitationModal } from './CitationModal';
+import { CitationModal, toolsMentionedIn, type DisclosurePrefill } from './CitationModal';
 import {
   ArrowLeft,
   Send,
@@ -159,6 +159,18 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
     setMessages([]);
   };
 
+  // Disclosure is only offered where the assignment allows AI with disclosure or partially (#19).
+  const canDisclose = assignment.aiStatus === 'allowed_with_disclosure' || assignment.aiStatus === 'partial_allowed';
+
+  // After an "Allowed" answer, start the statement from what the student asked (tool and purpose).
+  const disclosurePrefill: DisclosurePrefill | null = (() => {
+    const lastAllowed = [...messages].reverse().findIndex((m) => m.sender === 'compass' && m.verdictType === 'allowed');
+    if (lastAllowed === -1) return null;
+    const index = messages.length - 1 - lastAllowed;
+    const question = [...messages.slice(0, index)].reverse().find((m) => m.sender === 'user');
+    return question ? { tools: toolsMentionedIn(question.text), use: question.text } : null;
+  })();
+
   // Sort assignments strictly by due date
   const sortedAssignments = [...course.assignments].sort(
     (a, b) => (a.dueDateTimestamp || 0) - (b.dueDateTimestamp || 0)
@@ -178,15 +190,17 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
 
         <div className="flex items-center gap-2">
 
-          <button
-            onClick={() => setIsCitationModalOpen(true)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-800 hover:text-[#BA0C2F] bg-white border border-neutral-300 rounded-xl px-3 py-2 transition-colors cursor-pointer shadow-2xs"
-            title="Generate AI Citation & Disclosure"
-          >
-            <FileText className="w-3.5 h-3.5 text-[#BA0C2F]" />
-            <span className="hidden sm:inline">COAM Disclosure Template</span>
-            <span className="sm:hidden">Disclose</span>
-          </button>
+          {canDisclose && (
+            <button
+              onClick={() => setIsCitationModalOpen(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-800 hover:text-[#BA0C2F] bg-white border border-neutral-300 rounded-xl px-3 py-2 transition-colors cursor-pointer shadow-2xs"
+              title="Make a statement saying how you used AI on this assignment"
+            >
+              <FileText className="w-3.5 h-3.5 text-[#BA0C2F]" />
+              <span className="hidden sm:inline">Make AI disclosure</span>
+              <span className="sm:hidden">Disclose</span>
+            </button>
+          )}
 
           {messages.length > 0 && (
             <button
@@ -533,8 +547,9 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
 
       {/* Citation Modal */}
       <CitationModal
-        isOpen={isCitationModalOpen}
+        isOpen={isCitationModalOpen && canDisclose}
         onClose={() => setIsCitationModalOpen(false)}
+        prefill={disclosurePrefill}
         course={course}
         assignment={assignment}
         student={student}
