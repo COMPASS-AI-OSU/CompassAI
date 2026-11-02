@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Compass, LogIn, LogOut } from 'lucide-react';
 import { SessionUser } from '../types';
 import { signOut } from '@/app/(auth)/actions';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   currentScreen: 1 | 2 | 3;
@@ -16,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   user,
 }) => {
   return (
-    <header className="w-full bg-neutral-950 text-white border-b-2 border-b-[#BA0C2F] sticky top-0 z-30 transition-colors">
+    <header className="theme-keep w-full bg-neutral-950 text-white border-b-2 border-b-[#BA0C2F] sticky top-0 z-30 transition-colors">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         {/* Zone 1: Ohio State CompassAI wordmark */}
         <div className="flex items-center gap-2.5">
@@ -80,8 +81,9 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Signed-in person, or a Sign in link */}
+        {/* Zone 3: Night mode, then the signed-in person or a Sign in link */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle onDark />
           {user ? (
             <div className="flex items-center gap-2">
               {user.role === 'instructor' && (
