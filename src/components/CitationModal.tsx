@@ -1,6 +1,53 @@
-import React, { useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { Check, Copy, FileText, X } from 'lucide-react';
 import { Course, Assignment, StudentProfile } from '../types';
-import { X, Copy, Check, FileText } from 'lucide-react';
+
+/** Tools a student can tick. "Other" lets them type any tool not listed. */
+export const DISCLOSURE_TOOLS = ['ChatGPT', 'Claude', 'Gemini', 'Microsoft Copilot', 'Grammarly', 'Perplexity'] as const;
+
+export interface DisclosurePrefill {
+  tools: string[];
+  use: string;
+}
+
+const MAX_USE = 500;
+const MAX_OTHER = 60;
+const MAX_NAME = 80;
+
+/** Finds tools the student named in their own words, e.g. "Can I use ChatGPT to…". */
+export function toolsMentionedIn(text: string): string[] {
+  const t = text.toLowerCase();
+  const found: string[] = [];
+  if (/chat ?gpt|openai/.test(t)) found.push('ChatGPT');
+  if (/\bclaude\b/.test(t)) found.push('Claude');
+  if (/\bgemini\b|\bbard\b/.test(t)) found.push('Gemini');
+  if (/copilot/.test(t)) found.push('Microsoft Copilot');
+  if (/grammarly/.test(t)) found.push('Grammarly');
+  if (/perplexity/.test(t)) found.push('Perplexity');
+  return found;
+}
+
+function todayLabel(): string {
+  return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+/** The statement uses only the student's own entries plus course, assignment, their name and today's date (#19). */
+export function buildStatement(parts: {
+  courseCode: string;
+  assignmentTitle: string;
+  name: string;
+  date: string;
+  tools: string[];
+  use: string;
+}): string {
+  return [
+    `AI use disclosure: ${parts.courseCode}, ${parts.assignmentTitle}`,
+    `Student: ${parts.name}`,
+    `Date: ${parts.date}`,
+    `AI tools used: ${parts.tools.join(', ')}`,
+    `How I used them: ${parts.use}`,
+  ].join('\n');
+}
 
 interface CitationModalProps {
   isOpen: boolean;
@@ -8,132 +55,237 @@ interface CitationModalProps {
   course: Course;
   assignment: Assignment;
   student: StudentProfile;
+  /** Filled in from the chat when Compass said the use is allowed. The student can change everything. */
+  prefill?: DisclosurePrefill | null;
 }
 
-export const CitationModal: React.FC<CitationModalProps> = ({
-  isOpen,
-  onClose,
-  course,
-  assignment,
-  student,
-}) => {
-  const [copiedType, setCopiedType] = useState<string | null>(null);
+export const CitationModal: React.FC<CitationModalProps> = (props) => {
+  if (!props.isOpen) return null;
+  // Remount on every open so a new prefill from the chat is picked up.
+  return <DisclosureDialog key={`${props.assignment.id}:${props.prefill?.use ?? ''}`} {...props} />;
+};
 
-  if (!isOpen) return null;
+function DisclosureDialog({ onClose, course, assignment, student, prefill }: CitationModalProps) {
+  const listed = (prefill?.tools ?? []).filter((t) => (DISCLOSURE_TOOLS as readonly string[]).includes(t));
+  const [tools, setTools] = useState<string[]>(listed);
+  const [other, setOther] = useState('');
+  const [use, setUse] = useState(prefill?.use.slice(0, MAX_USE) ?? '');
+  const [name, setName] = useState(student.name === 'there' ? '' : student.name);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const statementRef = useRef<HTMLPreElement>(null);
+  const firstFieldRef = useRef<HTMLInputElement>(null);
+  const titleId = useId();
+  const date = todayLabel();
 
-  const today = 'Oct 24, 2026';
+  // Escape closes; focus starts on the first field.
+  useEffect(() => {
+    firstFieldRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
-  const formats = [
-    {
-      id: 'coam',
-      title: 'OSU COAM Standard AI Transparency Statement',
-      snippet: `### The Ohio State University — COAM AI Disclosure
-- **Course**: ${course.code} (${course.professor})
-- **Assignment**: ${assignment.title}
-- **Student**: ${student.name} (${student.email})
-- **Date**: ${today}
-- **AI Tool Consulted**: ChatGPT-4o / Claude 3.5 Sonnet
-- **Permitted Purpose**: Diagnostic error trace clarification and conceptual syntax review.
-- **Affirmation**: Under Ohio State Code of Student Conduct Rule 3335-23-04, all core problem logic, data calculations, and submitted prose were independently composed by ${student.name}.`,
-    },
-    {
-      id: 'readme',
-      title: 'CarmenCanvas / Code Header Comment Format',
-      snippet: `/**
- * @course ${course.code} - ${course.name}
- * @instructor ${course.professor}
- * @assignment ${assignment.title}
- * @student ${student.name} (${student.email})
- * @ai_disclosure Consulted ChatGPT-4o on ${today} for syntax troubleshooting.
- * All algorithm methods and class implementations independently authored.
- */`,
-    },
-    {
-      id: 'mla',
-      title: 'MLA 9th Edition Format (For English / Writing Papers)',
-      snippet: `"Diagnostic prompt regarding ${assignment.title}." ChatGPT, 4o version, OpenAI, 24 Oct. 2026, chatgpt.com.
-In-text citation: ("Diagnostic prompt regarding ${assignment.title}")`,
-    },
-  ];
+  const allTools = [...tools, ...(other.trim() ? [other.trim()] : [])];
+  const missing = [
+    allTools.length === 0 && 'pick at least one AI tool',
+    !use.trim() && 'describe how you used it',
+    !name.trim() && 'add your name',
+  ].filter(Boolean) as string[];
+  const statement = missing.length
+    ? null
+    : buildStatement({
+        courseCode: course.code,
+        assignmentTitle: assignment.title,
+        name: name.trim(),
+        date,
+        tools: allTools,
+        use: use.trim(),
+      });
 
-  const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedType(id);
-    setTimeout(() => setCopiedType(null), 2500);
+  const toggleTool = (tool: string) => {
+    setCopyState('idle');
+    setTools((prev) => (prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool]));
   };
 
+  const copy = async () => {
+    if (!statement) return;
+    try {
+      await navigator.clipboard.writeText(statement);
+      setCopyState('copied');
+      setTimeout(() => setCopyState((s) => (s === 'copied' ? 'idle' : s)), 2500);
+    } catch {
+      // Clipboard blocked: select the text so the student can copy it themselves.
+      setCopyState('failed');
+      const el = statementRef.current;
+      if (el) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }
+  };
+
+  const fieldClass =
+    'w-full px-3 py-2 text-sm bg-white border-2 border-neutral-400 focus:border-neutral-900 rounded-xl text-neutral-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-lg w-full border border-neutral-300 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white rounded-2xl max-w-lg w-full border border-neutral-300 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      >
         <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-900 text-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#BA0C2F] text-white flex items-center justify-center">
-              <FileText className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg bg-[#BA0C2F] flex items-center justify-center">
+              <FileText className="w-4 h-4" aria-hidden="true" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">
-                OSU COAM AI Disclosure Generator
+              <h3 id={titleId} className="text-base font-bold">
+                AI use disclosure
               </h3>
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-neutral-300">
                 {course.code} · {assignment.title}
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors"
+            aria-label="Close"
+            className="p-1.5 text-neutral-300 hover:text-white rounded-lg hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Body */}
         <div className="p-5 space-y-4 overflow-y-auto">
-          <p className="text-xs text-neutral-600 font-medium">
-            Copy and paste this disclosure statement into your CarmenCanvas submission, code header, or paper appendix as required by {course.professor}&apos;s syllabus.
+          <p className="text-sm text-neutral-700">
+            Fill this in to make a disclosure statement you can paste into your Canvas submission. It only includes what
+            you enter here.
+            {prefill && ' We started it from your question in the chat. Change anything that isn’t right.'}
           </p>
 
-          <div className="space-y-3">
-            {formats.map((f) => (
-              <div
-                key={f.id}
-                className="p-3.5 bg-neutral-50 border border-neutral-300 rounded-xl space-y-2"
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-bold text-neutral-900">Which AI tools did you use?</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {DISCLOSURE_TOOLS.map((tool, i) => (
+                <label
+                  key={tool}
+                  className="flex items-center gap-2 text-sm text-neutral-900 border border-neutral-300 rounded-lg px-3 py-2 cursor-pointer has-checked:border-[#BA0C2F] has-checked:bg-[#BA0C2F]/5"
+                >
+                  <input
+                    ref={i === 0 ? firstFieldRef : undefined}
+                    type="checkbox"
+                    checked={tools.includes(tool)}
+                    onChange={() => toggleTool(tool)}
+                    className="accent-[#BA0C2F] w-4 h-4"
+                  />
+                  {tool}
+                </label>
+              ))}
+            </div>
+            <label className="block text-sm text-neutral-800">
+              <span className="font-semibold">Other tool</span> (optional)
+              <input
+                type="text"
+                value={other}
+                maxLength={MAX_OTHER}
+                onChange={(e) => {
+                  setOther(e.target.value);
+                  setCopyState('idle');
+                }}
+                className={`${fieldClass} mt-1`}
+              />
+            </label>
+          </fieldset>
+
+          <label className="block text-sm">
+            <span className="font-bold text-neutral-900">How did you use it?</span>
+            <span className="block text-xs text-neutral-600">For example: “Brainstormed topic ideas, then wrote the essay myself.”</span>
+            <textarea
+              rows={3}
+              value={use}
+              maxLength={MAX_USE}
+              onChange={(e) => {
+                setUse(e.target.value);
+                setCopyState('idle');
+              }}
+              className={`${fieldClass} mt-1`}
+            />
+            <span className="block text-right text-xs text-neutral-600">
+              {use.length}/{MAX_USE}
+            </span>
+          </label>
+
+          <label className="block text-sm">
+            <span className="font-bold text-neutral-900">Your name</span>
+            <input
+              type="text"
+              value={name}
+              maxLength={MAX_NAME}
+              onChange={(e) => {
+                setName(e.target.value);
+                setCopyState('idle');
+              }}
+              className={`${fieldClass} mt-1`}
+            />
+          </label>
+
+          <section aria-label="Your statement" className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-neutral-900">Your statement</span>
+              <button
+                type="button"
+                onClick={copy}
+                disabled={!statement}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-white border-2 border-neutral-900 text-neutral-900 hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-neutral-900">
-                    {f.title}
-                  </span>
-                  <button
-                    onClick={() => handleCopy(f.id, f.snippet)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-md bg-white border border-neutral-300 hover:border-[#BA0C2F] text-neutral-800 hover:text-[#BA0C2F] transition-colors shadow-2xs"
-                  >
-                    {copiedType === f.id ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-emerald-700">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-neutral-500" />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <pre className="text-[11px] font-mono text-neutral-800 bg-white p-2.5 rounded-lg border border-neutral-200 overflow-x-auto whitespace-pre-wrap">
-                  {f.snippet}
-                </pre>
-              </div>
-            ))}
-          </div>
+                {copyState === 'copied' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-700" aria-hidden="true" /> Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" aria-hidden="true" /> Copy
+                  </>
+                )}
+              </button>
+            </div>
+            {statement ? (
+              <pre
+                ref={statementRef}
+                className="text-xs font-mono text-neutral-900 bg-neutral-50 p-3 rounded-lg border border-neutral-300 whitespace-pre-wrap"
+              >
+                {statement}
+              </pre>
+            ) : (
+              <p className="text-sm text-neutral-700 bg-neutral-50 p-3 rounded-lg border border-dashed border-neutral-400">
+                To see your statement, {missing.join(', ')}.
+              </p>
+            )}
+            <p role="status" aria-live="polite" className="text-xs font-semibold min-h-4">
+              {copyState === 'copied' && <span className="text-emerald-800">Copied to your clipboard.</span>}
+              {copyState === 'failed' && (
+                <span className="text-[#9B0A27]">
+                  Couldn’t copy automatically. The statement is selected: press Ctrl+C (or ⌘C) to copy it.
+                </span>
+              )}
+            </p>
+          </section>
         </div>
 
-        {/* Modal Footer */}
-        <div className="px-5 py-3 border-t border-neutral-200 bg-neutral-100 flex items-center justify-end">
+        <div className="px-5 py-3 border-t border-neutral-200 bg-neutral-100 flex justify-end">
           <button
+            type="button"
             onClick={onClose}
-            className="px-5 py-2 text-xs font-bold rounded-xl bg-[#BA0C2F] hover:bg-[#990000] text-white transition-colors"
+            className="px-5 py-2 text-sm font-bold rounded-xl bg-[#BA0C2F] hover:bg-[#990000] text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-2"
           >
             Done
           </button>
@@ -141,4 +293,4 @@ In-text citation: ("Diagnostic prompt regarding ${assignment.title}")`,
       </div>
     </div>
   );
-};
+}
