@@ -17,6 +17,8 @@ interface Screen2AssignmentsProps {
   onSelectAssignment: (assignment: Assignment) => void;
   onBack: () => void;
   onContinueToCompass: (assignment: Assignment) => void;
+  /** "Course" dropdown listing My Courses (#14). */
+  courseSwitcher?: React.ReactNode;
 }
 
 export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
@@ -25,12 +27,13 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
   onSelectAssignment,
   onBack,
   onContinueToCompass,
+  courseSwitcher,
 }) => {
-  const [filter, setFilter] = useState<'all' | 'strictly_prohibited' | 'partial_allowed' | 'allowed_with_disclosure' | 'study_prep_only'>('all');
+  const [filter, setFilter] = useState<'all' | 'strictly_prohibited' | 'partial_allowed' | 'allowed_with_disclosure' | 'allowed' | 'study_prep_only'>('all');
 
   // Strictly sort assignments in chronological order of due date (Requirement 6)
   const sortedAndFilteredAssignments = [...course.assignments]
-    .sort((a, b) => (a.dueDateTimestamp || 0) - (b.dueDateTimestamp || 0))
+    .sort((a, b) => (a.dueDateTimestamp ?? Number.MAX_SAFE_INTEGER) - (b.dueDateTimestamp ?? Number.MAX_SAFE_INTEGER))
     .filter((a) => {
       if (filter === 'all') return true;
       return a.aiStatus === filter;
@@ -55,6 +58,8 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
         </div>
       </div>
 
+      {courseSwitcher}
+
       {/* Header section matching whiteboard: Course Name & Prof Name */}
       <div className="bg-white border-t-4 border-t-[#BA0C2F] border-x border-b border-neutral-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -68,12 +73,10 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
             <div className="text-sm sm:text-base font-semibold text-neutral-700 mt-1">
               Instructor: {course.professor}
             </div>
-            {course.id === 'busmhr-2292' && (
-              <div className="text-xs text-neutral-500 mt-1 flex flex-wrap items-center gap-2">
+            {course.officeHours && (
+              <div className="text-xs text-neutral-600 mt-1 flex flex-wrap items-center gap-2">
                 <span className="font-semibold text-neutral-700">Office Hours:</span>
-                <span>Tues 6:30–7:30 AM (Buckeye Donuts)</span>
-                <span>·</span>
-                <span>Wed 2:05–3:00 PM (Fisher Hall 352)</span>
+                <span>{course.officeHours}</span>
               </div>
             )}
           </div>
@@ -140,6 +143,16 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
             }`}
           >
             Allowed w/ Disclosure
+          </button>
+          <button
+            onClick={() => setFilter('allowed')}
+            className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
+              filter === 'allowed'
+                ? 'bg-emerald-800 text-white shadow-2xs'
+                : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+            }`}
+          >
+            Allowed
           </button>
         </div>
 
@@ -225,7 +238,7 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
                   {/* Column 4: Comment from Instructor & Quick Proceed (col-span-3, clean typography) */}
                   <div className="col-span-3 pl-1 flex items-center justify-between gap-2">
                     <p className="text-xs text-neutral-700 leading-relaxed italic line-clamp-3 flex-1">
-                      &ldquo;{assignment.instructorComment}&rdquo;
+                      {assignment.instructorComment ? <>&ldquo;{assignment.instructorComment}&rdquo;</> : <span className="not-italic text-neutral-500">No comment from your instructor.</span>}
                     </p>
                     {isSelected && (
                       <button
@@ -291,13 +304,21 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
                       Comment from Instructor:
                     </span>
                     <p className="italic leading-relaxed">
-                      &ldquo;{assignment.instructorComment}&rdquo;
+                      {assignment.instructorComment ? <>&ldquo;{assignment.instructorComment}&rdquo;</> : <span className="not-italic text-neutral-500">No comment from your instructor.</span>}
                     </p>
                   </div>
                 </div>
               </div>
             );
           })}
+          {course.assignments.length === 0 && (
+            <div className="p-8 text-center text-sm text-neutral-600">
+              Your instructor hasn’t published any assignment rules for this course yet.
+            </div>
+          )}
+          {course.assignments.length > 0 && sortedAndFilteredAssignments.length === 0 && (
+            <div className="p-8 text-center text-sm text-neutral-600">No assignments with this AI level.</div>
+          )}
         </div>
       </div>
     </div>

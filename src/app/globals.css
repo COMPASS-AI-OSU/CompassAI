@@ -77,6 +77,9 @@
 :root[data-theme='dark'] .bg-amber-700 {
   background-color: oklch(55.5% 0.163 48.998);
 }
+:root[data-theme='dark'] .bg-emerald-800 {
+  background-color: oklch(43.2% 0.095 166.913);
+}
 
 /* Strong outlines soften so cards don't glow. */
 :root[data-theme='dark'] .border-neutral-900:not(.theme-keep, .theme-keep *) {
