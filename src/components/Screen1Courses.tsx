@@ -51,7 +51,7 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
           </div>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-950 font-serif">
-          Welcome, {student.name.split(' ')[0]}
+          {student.name ? `Welcome, ${student.name.split(' ')[0]}` : 'Welcome'}
         </h1>
         <p className="text-base sm:text-lg text-neutral-800 font-bold pt-1">What course do you want help with?</p>
         <p className="text-xs text-neutral-600">

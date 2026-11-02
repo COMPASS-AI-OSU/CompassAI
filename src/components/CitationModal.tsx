@@ -70,7 +70,7 @@ function DisclosureDialog({ onClose, course, assignment, student, prefill }: Cit
   const [tools, setTools] = useState<string[]>(listed);
   const [other, setOther] = useState('');
   const [use, setUse] = useState(prefill?.use.slice(0, MAX_USE) ?? '');
-  const [name, setName] = useState(student.name === 'there' ? '' : student.name);
+  const [name, setName] = useState(student.name);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const statementRef = useRef<HTMLPreElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
