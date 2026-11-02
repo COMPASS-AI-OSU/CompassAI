@@ -277,7 +277,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
           </div>
 
           <h2 className="text-xl sm:text-2xl font-bold text-neutral-950 font-serif leading-snug">
-            Hi, {studentFirstName}! <br className="hidden sm:inline" />
+            {studentFirstName ? `Hi, ${studentFirstName}!` : 'Hi!'} <br className="hidden sm:inline" />
             How can I help you with {assignment.title}?
           </h2>
 
@@ -340,7 +340,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
                       <div className="max-w-[85%] bg-neutral-900 text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-xs">
                         <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 mb-1 font-medium">
                           <User className="w-3 h-3 text-[#BA0C2F]" />
-                          <span>{studentFirstName}</span>
+                          <span>{studentFirstName || 'You'}</span>
                         </div>
                         <p className="text-sm font-semibold">{msg.text}</p>
                       </div>
