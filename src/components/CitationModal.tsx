@@ -141,7 +141,7 @@ function DisclosureDialog({ onClose, course, assignment, student, prefill }: Cit
         aria-labelledby={titleId}
         className="bg-white rounded-2xl max-w-lg w-full border border-neutral-300 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-900 text-white">
+        <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-neutral-900 text-white theme-keep">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#BA0C2F] flex items-center justify-center">
               <FileText className="w-4 h-4" aria-hidden="true" />

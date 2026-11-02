@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Lock, LogOut } from 'lucide-react';
 import { signOut } from '@/app/(auth)/actions';
 import { CompassMark } from '@/components/auth/AuthShell';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const buttonLink =
   'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-2';
@@ -11,7 +12,7 @@ export const secondaryButton = `${buttonLink} bg-white border-2 border-neutral-9
 
 export function InstructorHeader({ email }: { email: string }) {
   return (
-    <header className="w-full bg-neutral-950 text-white border-b-2 border-b-[#BA0C2F]">
+    <header className="theme-keep w-full bg-neutral-950 text-white border-b-2 border-b-[#BA0C2F]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <Link
           href="/instructor"
@@ -22,6 +23,7 @@ export function InstructorHeader({ email }: { email: string }) {
           <span className="text-[11px] font-bold uppercase bg-[#BA0C2F] px-1.5 py-0.5 rounded">Instructor</span>
         </Link>
         <div className="flex items-center gap-3 text-sm">
+          <ThemeToggle onDark />
           <span className="hidden sm:inline text-neutral-300">{email}</span>
           <form action={signOut}>
             <button

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 /** The compass from the whiteboard sketch: a circle with N, E, S, W. */
 export function CompassMark({ className = 'w-14 h-14' }: { className?: string }) {
@@ -32,7 +33,7 @@ export function AuthShell({
 }) {
   return (
     <div className="min-h-screen bg-neutral-100 text-neutral-900 flex flex-col font-sans antialiased">
-      <header className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
+      <header className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 flex items-start justify-between gap-4">
         <Link
           href="/"
           className="inline-flex items-center gap-4 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-4"
@@ -45,6 +46,7 @@ export function AuthShell({
             <span className="text-sm font-extrabold text-[#BA0C2F] mb-1.5">AI</span>
           </span>
         </Link>
+        <ThemeToggle />
       </header>
 
       <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
