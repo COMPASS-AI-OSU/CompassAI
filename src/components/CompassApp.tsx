@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { Course, Assignment, StudentProfile, RecentSession, SessionUser } from '@/types';
-import { COURSES, INITIAL_RECENT_SESSION } from '@/data/courses';
+import { COURSES } from '@/data/courses';
 import { Header } from './Header';
 import { StepBreadcrumb } from './StepBreadcrumb';
 import { Screen1Courses } from './Screen1Courses';
@@ -33,11 +33,9 @@ export default function CompassApp({ user }: { user: SessionUser | null }) {
     COURSES[0].assignments[0] // Default to Crisis Case Preparation & Execution
   );
   const currentStudent = profileFor(user);
-  // Question history is per person, so logged-out visitors never see a "pick up where you left off" card.
-  const [recentSession, setRecentSession] = useState<RecentSession | null>(
-    user ? INITIAL_RECENT_SESSION : null
-  );
-  const [isMobileFrame, setIsMobileFrame] = useState<boolean>(false);
+  // The "Pick Up Where You Left Off" card is hidden until issue #23 shows each student's real
+  // last conversation; the prototype's sample session made every student see the same fake one.
+  const [recentSession, setRecentSession] = useState<RecentSession | null>(null);
 
   // Navigation handlers
   const handleSelectCourse = (course: Course) => {
@@ -115,8 +113,6 @@ export default function CompassApp({ user }: { user: SessionUser | null }) {
       <Header
         currentScreen={currentScreen}
         onNavigateScreen={handleDirectNavigation}
-        isMobileFrame={isMobileFrame}
-        setIsMobileFrame={setIsMobileFrame}
         user={user}
       />
 
@@ -141,26 +137,9 @@ export default function CompassApp({ user }: { user: SessionUser | null }) {
         assignmentTitle={selectedAssignment?.title}
       />
 
-      {/* Main Content Area: Responsive container or Simulated Phone Viewport */}
+      {/* Main Content Area (responsive: works on phones and laptops) */}
       <main className="flex-1 flex flex-col items-center justify-start py-4 sm:py-6 px-2 sm:px-4">
-        <div
-          className={`w-full transition-all duration-300 ${
-            isMobileFrame
-              ? 'max-w-[420px] bg-white rounded-3xl border-8 border-neutral-900 shadow-2xl overflow-hidden min-h-[740px] my-2'
-              : 'max-w-5xl'
-          }`}
-        >
-          {/* Simulated Mobile Status bar indicator if in mobile frame preview mode */}
-          {isMobileFrame && (
-            <div className="bg-neutral-950 text-neutral-300 px-6 py-2 flex items-center justify-between text-[11px] font-semibold tracking-tight border-b border-neutral-800">
-              <span>9:41</span>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#BA0C2F] inline-block"></span>
-                <span className="font-bold text-white">Carmen · CompassAI</span>
-              </div>
-            </div>
-          )}
-
+        <div className="w-full max-w-5xl">
           {/* SCREEN 1: Course Selection matching IMG_5271.JPG */}
           {currentScreen === 1 && (
             <Screen1Courses
@@ -170,7 +149,7 @@ export default function CompassApp({ user }: { user: SessionUser | null }) {
               selectedCourse={selectedCourse}
               onSelectCourse={handleSelectCourse}
               onContinue={handleContinueToAssignments}
-              recentSession={recentSession}
+              recentSession={null /* hidden until #23 */}
               onResumeRecent={handleResumeRecent}
             />
           )}

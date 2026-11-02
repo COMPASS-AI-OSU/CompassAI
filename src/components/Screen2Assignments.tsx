@@ -49,10 +49,6 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-700 bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-300">
-            <span className="w-2 h-2 rounded-full bg-[#BA0C2F]"></span>
-            <span>Prototype: sample data</span>
-          </span>
           <div className="text-xs text-neutral-500 font-semibold tracking-wide uppercase hidden sm:block">
             Step 2: Course Policy Table
           </div>

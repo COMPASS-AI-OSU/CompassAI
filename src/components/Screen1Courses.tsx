@@ -94,10 +94,6 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
             <GraduationCap className="w-3.5 h-3.5 text-[#BA0C2F]" />
             <span>The Ohio State University · Autumn 2026</span>
           </div>
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-700 bg-neutral-100 px-3 py-1 rounded-md border border-neutral-300">
-            <span className="w-2 h-2 rounded-full bg-[#BA0C2F]"></span>
-            <span>Prototype: sample data</span>
-          </span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-950 font-serif">
           Welcome, {student.name.split(' ')[0]}

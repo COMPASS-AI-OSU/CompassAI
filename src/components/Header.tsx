@@ -1,22 +1,18 @@
 import React from 'react';
 import Link from 'next/link';
-import { Compass, Smartphone, Monitor, LogIn, LogOut } from 'lucide-react';
+import { Compass, LogIn, LogOut } from 'lucide-react';
 import { SessionUser } from '../types';
 import { signOut } from '@/app/(auth)/actions';
 
 interface HeaderProps {
   currentScreen: 1 | 2 | 3;
   onNavigateScreen: (screen: 1 | 2 | 3) => void;
-  isMobileFrame: boolean;
-  setIsMobileFrame: (val: boolean) => void;
   user: SessionUser | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentScreen,
   onNavigateScreen,
-  isMobileFrame,
-  setIsMobileFrame,
   user,
 }) => {
   return (
@@ -84,37 +80,8 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Actions (Mobile frame toggle + Student persona selector) */}
+        {/* Zone 3: Signed-in person, or a Sign in link */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Device Viewport Toggle (for desktop testers) */}
-          <div className="hidden lg:flex items-center p-0.5 bg-neutral-900 rounded-lg border border-neutral-700">
-            <button
-              onClick={() => setIsMobileFrame(true)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                isMobileFrame
-                  ? 'bg-[#BA0C2F] text-white shadow-xs'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-              title="Preview in 390px Mobile Viewport"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>Mobile</span>
-            </button>
-            <button
-              onClick={() => setIsMobileFrame(false)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer ${
-                !isMobileFrame
-                  ? 'bg-neutral-800 text-white shadow-xs'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-              title="Preview in Fluid Desktop Layout"
-            >
-              <Monitor className="w-3.5 h-3.5" />
-              <span>Laptop</span>
-            </button>
-          </div>
-
-          {/* Signed-in person, or a Sign in link */}
           {user ? (
             <div className="flex items-center gap-2">
               {user.role === 'instructor' && (

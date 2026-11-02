@@ -177,11 +177,6 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
-          {/* Label required to be preserved: Prototype: sample data */}
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-700 bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-300">
-            <span className="w-2 h-2 rounded-full bg-[#BA0C2F]"></span>
-            <span>Prototype: sample data</span>
-          </span>
 
           <button
             onClick={() => setIsCitationModalOpen(true)}
