@@ -1,3 +1,6 @@
+// Type-only import: erased at build time, so client code never loads the server-only AI module.
+import type { CompassVerdict } from '@/lib/compass-ai';
+
 export type AIPolicyStatus = 'allowed' | 'allowed_with_disclosure' | 'partial_allowed' | 'strictly_prohibited' | 'study_prep_only';
 
 /** A suggested question on the Compass screen. */
@@ -66,11 +69,19 @@ export interface StudentProfile {
   year: string;
 }
 
+/** The student's last answered question, for the "Pick up where you left off" card (#23). */
 export interface RecentSession {
   courseId: string;
+  courseCode: string;
   assignmentId: string;
-  lastActive: string;
-  questionSnippet: string;
+  assignmentTitle: string;
+  question: string;
+  verdict: CompassVerdict;
+  answer: string;
+  quote: string | null;
+  suggestedContact?: string;
+  /** ISO timestamp of when Compass answered. */
+  answeredAt: string;
 }
 
 /** The signed-in person, as the browser sees them. Role is set only by the server. */
