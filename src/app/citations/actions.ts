@@ -1,5 +1,6 @@
 'use server';
 
+import { getCurrentUser } from '@/lib/auth';
 import type { Source } from '@/lib/citations';
 
 const DOI = /^10\.\d{4,9}\/\S{1,200}$/;
@@ -11,6 +12,10 @@ type DoiFields = Pick<Source, 'authors' | 'title' | 'container' | 'publisher' | 
  * (#47). Only the DOI is sent; nothing about the student.
  */
 export async function lookupDoi(input: string): Promise<{ fields?: DoiFields; error?: string }> {
+  // CLAUDE.md: re-check the user in every Server Action. Typing details by hand still works logged out.
+  const user = await getCurrentUser();
+  if (!user) return { error: 'Sign in to look up a DOI. You can still fill in the details yourself.' };
+
   const doi = String(input ?? '')
     .trim()
     .replace(/^https?:\/\/(dx\.)?doi\.org\//i, '')
@@ -49,6 +54,18 @@ export async function lookupDoi(input: string): Promise<{ fields?: DoiFields; er
   const [y, m, d] =
     work['published-print']?.['date-parts']?.[0] ?? work['published-online']?.['date-parts']?.[0] ?? work.issued?.['date-parts']?.[0] ?? [];
   const text = (v: string | number | undefined, max = 300) => (v === undefined || v === null ? '' : String(v).replace(/\s+/g, ' ').trim().slice(0, max));
+  // Crossref titles can contain markup such as <i>…</i>, <sub>…</sub> or <scp>…</scp>; keep only the words.
+  const plain = (v: string | undefined, max = 300) =>
+    text(
+      (v ?? '')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#0?39;|&apos;/g, "'")
+        .replace(/&amp;/g, '&'),
+      max
+    );
 
   return {
     fields: {
@@ -56,8 +73,8 @@ export async function lookupDoi(input: string): Promise<{ fields?: DoiFields; er
         .slice(0, 30)
         .map((a) => ({ first: text(a.given, 80), last: text(a.family ?? a.name, 80) }))
         .filter((a) => a.last),
-      title: text(work.title?.[0]),
-      container: text(work['container-title']?.[0]),
+      title: plain(work.title?.[0]),
+      container: plain(work['container-title']?.[0]),
       publisher: text(work.publisher, 200),
       volume: text(work.volume, 20),
       issue: text(work.issue, 20),

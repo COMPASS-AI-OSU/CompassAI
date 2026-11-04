@@ -35,6 +35,7 @@ export interface Source {
   title: string;
   container: string; // website name or journal name
   publisher: string;
+  place: string; // place of publication, books only (Chicago, Harvard, IEEE)
   edition: string; // "2", "3rd", "Revised"
   volume: string;
   issue: string;
@@ -53,6 +54,7 @@ export const EMPTY_SOURCE: Source = {
   title: '',
   container: '',
   publisher: '',
+  place: '',
   edition: '',
   volume: '',
   issue: '',
@@ -195,13 +197,38 @@ function inTextNames(list: Author[], style: CitationStyle, title: string): strin
     const and = style === 'apa' ? '&' : 'and';
     return `${list[0].last} ${and} ${list[1].last}`;
   }
-  if (style === 'chicago-ad' && list.length === 3) return `${list[0].last}, ${list[1].last}, and ${list[2].last}`;
+  if (list.length === 3) {
+    // Chicago 17 notes/author-date and Cite Them Right Harvard name up to three authors; et al. from four.
+    if (style === 'chicago' || style === 'chicago-ad') return `${list[0].last}, ${list[1].last}, and ${list[2].last}`;
+    if (style === 'harvard') return `${list[0].last}, ${list[1].last} and ${list[2].last}`;
+  }
   return `${list[0].last} et al.`;
 }
 
-/** Chicago short footnote: Names, Title (or “Title,”) page. */
-function chicagoNote(names: string, type: SourceType, title: string, page: string): string {
+const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'in', 'on', 'to', 'for', 'with', 'at', 'by', 'from']);
+
+/**
+ * Chicago's short title: titles over four words are shortened to their first key words, e.g.
+ * "How the Mind Hurts and Heals the Body" → "How the Mind Hurts". A short main title before
+ * a colon is used as is, and the short title never ends on a small word like "the" or "in".
+ */
+function shortTitle(title: string): string {
+  const t = clean(title);
+  const words = t.split(' ');
+  if (words.length <= 4) return t;
+  const main = t.split(':')[0].trim();
+  if (main !== t && main.split(' ').length <= 4) return main;
+  // A leading "The", "A" or "An" is dropped from a shortened title.
+  const start = /^(the|a|an)$/i.test(words[0]) ? 1 : 0;
+  const kept = words.slice(start, start + 4);
+  while (kept.length > 1 && SMALL_WORDS.has(kept.at(-1)!.toLowerCase().replace(/[^a-z]/g, ''))) kept.pop();
+  return kept.join(' ').replace(/[,:;.!?]+$/, '');
+}
+
+/** Chicago short footnote: Names, Short Title (or “Short Title,”) page. */
+function chicagoNote(names: string, type: SourceType, fullTitle: string, page: string): string {
   const lead = names ? `${names}, ` : '';
+  const title = shortTitle(fullTitle);
   if (type === 'book') return `${lead}${title}${page ? `, ${page}` : ''}.`;
   return page ? `${lead}“${title},” ${page}.` : `${lead}“${end(title)}”`;
 }
@@ -210,7 +237,15 @@ function chicagoNote(names: string, type: SourceType, title: string, page: strin
 
 export function formatCitation(raw: Source, style: CitationStyle): Citation {
   // A title's own trailing period (common in DOI data) would double up with the style's punctuation.
-  const s: Source = { ...raw, title: clean(raw.title).replace(/\.+$/, ''), container: clean(raw.container), publisher: clean(raw.publisher) };
+  const s: Source = {
+    ...raw,
+    title: clean(raw.title).replace(/\.+$/, ''),
+    container: clean(raw.container),
+    publisher: clean(raw.publisher),
+    place: clean(raw.place ?? ''),
+  };
+  // "New York: Oxford University Press" when a place is given, otherwise just the publisher.
+  const placeAndPublisher = [s.place, s.publisher].filter(Boolean).join(': ');
   const authors = named(s);
   const year = clean(s.year);
   const mi = monthIndex(s.month);
@@ -308,7 +343,7 @@ export function formatCitation(raw: Source, style: CitationStyle): Citation {
       if (s.type === 'book') {
         if (!titleFirst) b.add(end(title), true);
         if (ed) b.add(` ${ed} ed.`);
-        const pub = [s.publisher, ad ? '' : year].filter(Boolean).join(', ');
+        const pub = [placeAndPublisher, ad ? '' : year].filter(Boolean).join(', ');
         if (pub) b.add(` ${end(pub)}`);
         if (link) b.add(` ${end(link)}`);
       } else if (s.type === 'journal') {
@@ -322,11 +357,19 @@ export function formatCitation(raw: Source, style: CitationStyle): Citation {
         if (link) b.add(` ${end(link)}`);
       } else {
         if (!titleFirst) b.add(`“${end(title)}” `);
-        if (s.container) b.add(`${end(s.container)} `);
-        const pubDate = [mi !== null ? MONTHS[mi] : '', day ? `${day},` : '', ad ? '' : year].filter(Boolean).join(' ').replace(/,$/, '');
-        if (ad && mi !== null) b.add(`${end([MONTHS[mi], day].filter(Boolean).join(' '))} `);
-        else if (!ad && pubDate) b.add(`${end(pubDate)} `);
-        else if (acc) b.add(`Accessed ${MONTHS[acc.m]} ${acc.d}, ${acc.y}. `);
+        const pubDate = [mi !== null ? MONTHS[mi] : '', day ? `${day},` : '', year].filter(Boolean).join(' ').replace(/,$/, '');
+        if (ad) {
+          // Author-date: "Site Name, March 14, 2025." (the full date, with the year, after the site).
+          const fullDate = mi !== null ? pubDate : '';
+          const site = [s.container, fullDate].filter(Boolean).join(', ');
+          if (site) b.add(`${end(site)} `);
+          // No publication date: say when it was visited instead.
+          if (!fullDate && acc) b.add(`Accessed ${MONTHS[acc.m]} ${acc.d}, ${acc.y}. `);
+        } else {
+          if (s.container) b.add(`${end(s.container)} `);
+          if (pubDate) b.add(`${end(pubDate)} `);
+          else if (acc) b.add(`Accessed ${MONTHS[acc.m]} ${acc.d}, ${acc.y}. `);
+        }
         if (link) b.add(end(link));
       }
       const segs = b.segments;
@@ -347,14 +390,14 @@ export function formatCitation(raw: Source, style: CitationStyle): Citation {
       if (s.type === 'journal') {
         b.add(who ? `${who} ${y} ` : '').add(`‘${title}’${who ? '' : ` ${y}`}, `);
         if (s.container) b.add(s.container, true);
-        const loc = [vol ? `${vol}${iss ? `(${iss})` : ''}` : '', pages ? `pp. ${pages}` : ''].filter(Boolean).join(', ');
+        const loc = [vol ? `${vol}${iss ? `(${iss})` : ''}` : '', pages ? `${pages.includes('–') ? 'pp.' : 'p.'} ${pages}` : ''].filter(Boolean).join(', ');
         b.add(`${loc ? `, ${loc}` : ''}.`);
         if (link) b.add(` Available at: ${link}.`);
       } else {
         b.add(who ? `${who} ${y} ` : '').add(end(title).replace(/\.$/, ''), true).add(who ? '.' : ` ${y}.`);
         if (s.type === 'book') {
           if (ed) b.add(` ${ed} edn.`);
-          if (s.publisher) b.add(` ${end(s.publisher)}`);
+          if (placeAndPublisher) b.add(` ${end(placeAndPublisher)}`);
           if (link) b.add(` Available at: ${link}.`);
         } else if (link) {
           b.add(` Available at: ${link}`);
@@ -370,8 +413,9 @@ export function formatCitation(raw: Source, style: CitationStyle): Citation {
       if (authors.length) b.add(`${ieeeAuthors(authors)}, `);
       if (s.type === 'book') {
         b.add(title, true);
-        const rest = [ed ? `${ed} ed.` : '', s.publisher, year].filter(Boolean);
-        b.add(rest.length ? `, ${end(rest.join(', '))}` : '.');
+        b.add(ed ? `, ${ed} ed.` : '.');
+        const pub = [placeAndPublisher, year].filter(Boolean).join(', ');
+        if (pub) b.add(` ${end(pub)}`);
         if (doi) b.add(` doi: ${bareDoi(s.doi)}.`);
       } else if (s.type === 'journal') {
         b.add(`“${title},” `);

@@ -341,6 +341,15 @@ function CitationDialog({ onClose }: { onClose: () => void }) {
               <>
                 <TextInput label="Publisher" value={source.publisher} onChange={(v) => set('publisher', v)} />
                 <TextInput label="Edition (optional)" hint="Leave blank for a first edition." value={source.edition} onChange={(v) => set('edition', v)} maxLength={20} />
+                <div className="sm:col-span-2">
+                  <TextInput
+                    label="Place of publication (optional)"
+                    hint="Like New York, or New York, NY, USA for IEEE. Chicago, Harvard and IEEE use it."
+                    value={source.place}
+                    onChange={(v) => set('place', v)}
+                    maxLength={100}
+                  />
+                </div>
               </>
             )}
             {isJournal && (
