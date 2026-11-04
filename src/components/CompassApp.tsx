@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Course, Assignment, CourseSummary, StudentProfile, SessionUser } from '@/types';
+import { Course, Assignment, ChatMessage, CourseSummary, RecentSession, StudentProfile, SessionUser } from '@/types';
 import { getPublishedCourse } from '@/app/student-courses/actions';
 import { Header } from './Header';
 import { StepBreadcrumb } from './StepBreadcrumb';
@@ -14,6 +14,7 @@ import { Screen1Courses } from './Screen1Courses';
 import { Screen2Assignments } from './Screen2Assignments';
 import { Screen3Compass } from './Screen3Compass';
 import { CourseSwitcher } from './CourseSwitcher';
+import { compassMessageFrom, timeAgo } from '@/lib/compass-message';
 
 /** "smith.123@osu.edu" becomes "Smith". We only collect an email, so the name comes from it. */
 function nameFromEmail(email: string): string {
@@ -30,17 +31,25 @@ export default function CompassApp({
   user,
   initialCourses,
   coursesError,
+  initialRecentSession = null,
 }: {
   user: SessionUser | null;
   /** Every published course, loaded on the server (#14). */
   initialCourses: CourseSummary[];
   coursesError?: string;
+  /** The student's last answered question, loaded on the server (#23). */
+  initialRecentSession?: RecentSession | null;
 }) {
   const [currentScreen, setCurrentScreen] = useState<1 | 2 | 3>(1);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // "Pick up where you left off" (#23): the last answered question, and the conversation
+  // Resume reopens. `chatKey` changes on each Resume so the Compass screen starts from it.
+  const [recentSession, setRecentSession] = useState<RecentSession | null>(initialRecentSession);
+  const [resumeMessages, setResumeMessages] = useState<ChatMessage[] | undefined>(undefined);
+  const [chatKey, setChatKey] = useState(0);
   const currentStudent = profileFor(user);
 
   const goTo = (screen: 1 | 2 | 3) => {
@@ -65,8 +74,39 @@ export default function CompassApp({
       }
       setSelectedCourse(course);
       setSelectedAssignment(course.assignments[0] ?? null);
+      setResumeMessages(undefined);
       if (then) goTo(then);
       else if (currentScreen === 3 && course.assignments.length === 0) goTo(2);
+    } catch {
+      setLoadError('We couldn’t load this course. Check your connection and try again.');
+    } finally {
+      setLoadingCourseId(null);
+    }
+  };
+
+  /** Opens the course and assignment of the last answered question, showing that question and answer. */
+  const handleResumeRecent = async () => {
+    if (!recentSession || loadingCourseId) return;
+    const recent = recentSession;
+    setLoadingCourseId(recent.courseId);
+    setLoadError(null);
+    try {
+      const { course, error } = await getPublishedCourse(recent.courseId);
+      const assignment = course?.assignments.find((a) => a.id === recent.assignmentId);
+      if (!course || !assignment) {
+        setRecentSession(null);
+        setLoadError(error ?? 'That assignment isn’t available anymore. Your instructor may have unpublished it.');
+        return;
+      }
+      const when = timeAgo(recent.answeredAt);
+      setSelectedCourse(course);
+      setSelectedAssignment(assignment);
+      setResumeMessages([
+        { id: 'resume-q', sender: 'user', text: recent.question, timestamp: when },
+        compassMessageFrom(recent, course.code, 'resume-a', when),
+      ]);
+      setChatKey((k) => k + 1);
+      goTo(3);
     } catch {
       setLoadError('We couldn’t load this course. Check your connection and try again.');
     } finally {
@@ -80,10 +120,14 @@ export default function CompassApp({
 
   const handleSelectAssignment = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
+    // A reopened conversation belongs to its own assignment only.
+    if (assignment.id !== selectedAssignment?.id) setResumeMessages(undefined);
   };
 
   const handleContinueToCompass = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
+    setResumeMessages(undefined);
+    setChatKey((k) => k + 1);
     goTo(3);
   };
 
@@ -140,6 +184,8 @@ export default function CompassApp({
               onSelectCourse={(id) => loadCourse(id)}
               onOpenCourse={(id) => loadCourse(id, 2)}
               onContinue={handleContinueToAssignments}
+              recentSession={user?.role === 'student' ? recentSession : null}
+              onResumeRecent={handleResumeRecent}
             />
           )}
 
@@ -155,18 +201,32 @@ export default function CompassApp({
             />
           )}
 
-          {/* SCREEN 3: Compass chat. Keyed by course so switching courses starts a fresh chat. */}
+          {/* SCREEN 3: Compass chat. Keyed by course (and each Resume or new visit) so it starts fresh. */}
           {currentScreen === 3 && selectedCourse && selectedAssignment && (
             <Screen3Compass
-              key={selectedCourse.id}
+              key={`${selectedCourse.id}:${chatKey}`}
               course={selectedCourse}
               assignment={selectedAssignment}
               student={currentStudent}
               isSignedIn={user !== null}
               onBack={() => goTo(2)}
               onSwitchAssignment={handleSelectAssignment}
-              onSaveRecentSession={() => {
-                /* "Pick up where you left off" comes with #23 */
+              initialMessages={resumeMessages}
+              onAnswered={(question, answer) => {
+                // Keep the card current without another trip to the server (#23).
+                if (user?.role !== 'student') return;
+                setRecentSession({
+                  courseId: selectedCourse.id,
+                  courseCode: selectedCourse.code,
+                  assignmentId: selectedAssignment.id,
+                  assignmentTitle: selectedAssignment.title,
+                  question,
+                  verdict: answer.verdict as RecentSession['verdict'],
+                  answer: answer.answer,
+                  quote: answer.quote ?? null,
+                  suggestedContact: answer.suggestedContact,
+                  answeredAt: new Date().toISOString(),
+                });
               }}
               courseSwitcher={switcher}
             />
