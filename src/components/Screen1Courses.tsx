@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { CourseSummary, StudentProfile } from '../types';
+import { CourseSummary, RecentSession, StudentProfile } from '../types';
 import { MyCoursesPanel } from './MyCoursesPanel';
-import { Search, ArrowRight, GraduationCap, ChevronRight, BookOpen, Loader2, AlertCircle } from 'lucide-react';
+import { timeAgo } from '@/lib/compass-message';
+import { Search, ArrowRight, GraduationCap, ChevronRight, BookOpen, Loader2, AlertCircle, History } from 'lucide-react';
 
 interface Screen1CoursesProps {
   student: StudentProfile;
@@ -18,6 +19,9 @@ interface Screen1CoursesProps {
   /** Load a course and go straight to its policy table. */
   onOpenCourse: (courseId: string) => void;
   onContinue: () => void;
+  /** The student's last answered question (#23). Null hides the card. */
+  recentSession?: RecentSession | null;
+  onResumeRecent?: () => void;
 }
 
 export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
@@ -31,6 +35,8 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
   onSelectCourse,
   onOpenCourse,
   onContinue,
+  recentSession = null,
+  onResumeRecent,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -58,6 +64,50 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
           Check CarmenCanvas syllabus AI boundaries, COAM rules, and assignment permissions.
         </p>
       </div>
+
+      {/* Pick up where you left off (#23): the student's last answered question, one click back. */}
+      {recentSession && (
+        <section
+          aria-labelledby="pick-up-heading"
+          className="bg-white border-2 border-dashed border-neutral-300 hover:border-[#BA0C2F] rounded-2xl p-4 sm:p-5 transition-all"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[#BA0C2F]/10 flex items-center justify-center shrink-0 mt-0.5">
+                <History className="w-5 h-5 text-[#BA0C2F]" aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 id="pick-up-heading" className="text-sm sm:text-base font-bold text-neutral-950">
+                    Pick up where you left off
+                  </h2>
+                  {/* Server and browser clocks can differ by a minute; the label just updates. */}
+                  <span className="text-[11px] text-neutral-600 font-semibold" suppressHydrationWarning>
+                    ({timeAgo(recentSession.answeredAt)})
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-neutral-800 font-bold mt-0.5">
+                  {recentSession.courseCode} · {recentSession.assignmentTitle}
+                </p>
+                <p className="text-xs text-neutral-600 mt-1 italic line-clamp-2">&ldquo;{recentSession.question}&rdquo;</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onResumeRecent}
+              disabled={loadingCourseId !== null}
+              aria-label={`Resume your question about ${recentSession.courseCode}, ${recentSession.assignmentTitle}`}
+              className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-neutral-950 hover:bg-[#BA0C2F] text-white text-xs font-bold transition-all shadow-xs cursor-pointer min-h-[40px] disabled:opacity-60 disabled:cursor-wait focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-2"
+            >
+              {loadingCourseId === recentSession.courseId ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+              ) : null}
+              <span>Resume</span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        </section>
+      )}
 
       <MyCoursesPanel role={role} onOpenCourse={onOpenCourse} openingCourseId={loadingCourseId} />
 

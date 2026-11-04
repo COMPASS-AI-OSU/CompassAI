@@ -1,11 +1,20 @@
 import CompassApp from '@/components/CompassApp';
 import { listPublishedCourses } from '@/app/student-courses/actions';
+import { getRecentSession } from '@/app/recent-session/actions';
 import type { SessionUser } from '@/types';
 
-/** The student app (Courses → Policy table → Compass), with every published course loaded on the server (#14). */
+/**
+ * The student app (Courses → Policy table → Compass). Loads every published course on the server
+ * (#14), and a student's last answered question for "Pick up where you left off" (#23).
+ */
 export async function AppHome({ user }: { user: SessionUser | null }) {
-  const { courses, error } = await listPublishedCourses();
-  return <CompassApp user={user} initialCourses={courses} coursesError={error} />;
+  const [{ courses, error }, recentSession] = await Promise.all([
+    listPublishedCourses(),
+    user?.role === 'student' ? getRecentSession() : Promise.resolve(null),
+  ]);
+  return (
+    <CompassApp user={user} initialCourses={courses} coursesError={error} initialRecentSession={recentSession} />
+  );
 }
 
 export function AppLoading() {
