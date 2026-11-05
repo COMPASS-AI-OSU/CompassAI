@@ -46,6 +46,38 @@ function formatDate(isoDate: string): string {
   });
 }
 
+function formatShortDate(isoDate: string): string {
+  return new Date(`${isoDate}T12:00:00Z`).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+/** "11:59pm" → "11:59 PM", "7am" → "7 AM". */
+function times(text: string): string[] {
+  return [...text.matchAll(/\b(\d{1,2})(?::(\d{2}))?\s*([ap])\.?\s*m\.?(?![a-z])/gi)].map(
+    (m) => `${Number(m[1])}${m[2] ? `:${m[2]}` : ''} ${m[3].toUpperCase()}M`
+  );
+}
+
+/**
+ * A short due date for tight spaces: the date from due_at ("Wed, Oct 22"), or the start of
+ * the syllabus wording when there's no single date ("Friday of each week"), plus the time.
+ */
+export function compactDue(dueAt: string | null, dueText: string | null): { short: string; time?: string } {
+  const text = (dueText ?? '').replace(/\s+/g, ' ').trim();
+  const found = times(text);
+  const time = found.length >= 2 ? `${found[0]} – ${found.at(-1)}` : found.length === 1 ? `by ${found[0]}` : undefined;
+  if (dueAt) return { short: formatShortDate(dueAt), time };
+  if (!text) return { short: 'No due date' };
+  // Keep the words before the time ("Friday of each week by 11:59 PM EST" → "Friday of each week").
+  const lead = text.split(/,?\s+(?:at|by|before|between|from|until|due)\s+(?=\d|noon|midnight)/i)[0].replace(/[,;:\s]+$/, '');
+  const short = lead.length > 28 ? `${lead.slice(0, 27).trimEnd()}…` : lead;
+  return { short: short.charAt(0).toUpperCase() + short.slice(1), time };
+}
+
 /** Three AI-use questions any assignment's rules can answer. No AI call needed. */
 export function suggestedQuestions(title: string) {
   return [
@@ -67,6 +99,10 @@ export function toStudentCourse(row: PublishedCourseRow): Course {
       title: a.title,
       dueDate: a.due_text ?? (a.due_at ? formatDate(a.due_at) : 'No due date'),
       dueDateTimestamp: a.due_at ? Date.parse(`${a.due_at}T12:00:00Z`) : NO_DUE_DATE,
+      ...(() => {
+        const c = compactDue(a.due_at, a.due_text);
+        return { dueShort: c.short, dueTime: c.time };
+      })(),
       aiStatus: STATUS[a.ai_level!],
       aiStatusLabel: AI_LEVEL_LABELS[a.ai_level!],
       instructorComment: a.instructor_comment ?? '',

@@ -221,9 +221,18 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
                   </div>
 
                   {/* Column 2: Due Date */}
-                  <div className="col-span-2 text-xs font-bold text-neutral-800 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-[#BA0C2F] shrink-0" />
-                    <span>{assignment.dueDate}</span>
+                  {/* Compact date and time; the syllabus's full wording shows on hover. */}
+                  <div className="col-span-2 flex items-start gap-1.5" title={assignment.dueDate}>
+                    <Calendar className="w-3.5 h-3.5 text-[#BA0C2F] shrink-0 mt-0.5" aria-hidden="true" />
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-neutral-900 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {assignment.dueShort}
+                      </div>
+                      {assignment.dueTime && (
+                        <div className="text-[11px] font-medium text-neutral-600 whitespace-nowrap">{assignment.dueTime}</div>
+                      )}
+                      <span className="sr-only">Due as written in the syllabus: {assignment.dueDate}</span>
+                    </div>
                   </div>
 
                   {/* Column 3: AI Allowed? (Fixed col-span-3, no overlap) */}
@@ -286,8 +295,11 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
 
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-1.5 text-neutral-800 font-bold">
-                      <Calendar className="w-3.5 h-3.5 text-[#BA0C2F]" />
-                      <span>Due: {assignment.dueDate}</span>
+                      <Calendar className="w-3.5 h-3.5 text-[#BA0C2F]" aria-hidden="true" />
+                      <span title={assignment.dueDate}>
+                        Due: {assignment.dueShort}
+                        {assignment.dueTime && <span className="font-medium text-neutral-600"> · {assignment.dueTime}</span>}
+                      </span>
                     </div>
                     <div>
                       <PolicyBadge
