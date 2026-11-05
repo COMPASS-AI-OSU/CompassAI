@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Course, Assignment, StudentProfile, ChatMessage } from '../types';
-import { CitationModal, toolsMentionedIn, type DisclosurePrefill } from './CitationModal';
+import { CitationModal } from './CitationModal';
 import { SourceCitationModal } from './SourceCitationModal';
 import {
   ArrowLeft,
@@ -168,14 +168,6 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
   // Disclosure is only offered where the assignment allows AI with disclosure or partially (#19).
   const canDisclose = assignment.aiStatus === 'allowed_with_disclosure' || assignment.aiStatus === 'partial_allowed';
 
-  // After an "Allowed" answer, start the statement from what the student asked (tool and purpose).
-  const disclosurePrefill: DisclosurePrefill | null = (() => {
-    const lastAllowed = [...messages].reverse().findIndex((m) => m.sender === 'compass' && m.verdictType === 'allowed');
-    if (lastAllowed === -1) return null;
-    const index = messages.length - 1 - lastAllowed;
-    const question = [...messages.slice(0, index)].reverse().find((m) => m.sender === 'user');
-    return question ? { tools: toolsMentionedIn(question.text), use: question.text } : null;
-  })();
 
   // Sort assignments strictly by due date
   const sortedAssignments = [...course.assignments].sort(
@@ -569,10 +561,8 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
       <CitationModal
         isOpen={isCitationModalOpen && canDisclose}
         onClose={() => setIsCitationModalOpen(false)}
-        prefill={disclosurePrefill}
         course={course}
         assignment={assignment}
-        student={student}
       />
     </div>
   );

@@ -1,31 +1,13 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { Check, Copy, FileText, X } from 'lucide-react';
-import { Course, Assignment, StudentProfile } from '../types';
+import { Course, Assignment } from '../types';
 
 /** Tools a student can tick. "Other" lets them type any tool not listed. */
 export const DISCLOSURE_TOOLS = ['ChatGPT', 'Claude', 'Gemini', 'Microsoft Copilot', 'Grammarly', 'Perplexity'] as const;
 
-export interface DisclosurePrefill {
-  tools: string[];
-  use: string;
-}
-
 const MAX_USE = 500;
 const MAX_OTHER = 60;
 const MAX_NAME = 80;
-
-/** Finds tools the student named in their own words, e.g. "Can I use ChatGPT to…". */
-export function toolsMentionedIn(text: string): string[] {
-  const t = text.toLowerCase();
-  const found: string[] = [];
-  if (/chat ?gpt|openai/.test(t)) found.push('ChatGPT');
-  if (/\bclaude\b/.test(t)) found.push('Claude');
-  if (/\bgemini\b|\bbard\b/.test(t)) found.push('Gemini');
-  if (/copilot/.test(t)) found.push('Microsoft Copilot');
-  if (/grammarly/.test(t)) found.push('Grammarly');
-  if (/perplexity/.test(t)) found.push('Perplexity');
-  return found;
-}
 
 function todayLabel(): string {
   return new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -54,23 +36,20 @@ interface CitationModalProps {
   onClose: () => void;
   course: Course;
   assignment: Assignment;
-  student: StudentProfile;
-  /** Filled in from the chat when Compass said the use is allowed. The student can change everything. */
-  prefill?: DisclosurePrefill | null;
 }
 
 export const CitationModal: React.FC<CitationModalProps> = (props) => {
   if (!props.isOpen) return null;
-  // Remount on every open so a new prefill from the chat is picked up.
-  return <DisclosureDialog key={`${props.assignment.id}:${props.prefill?.use ?? ''}`} {...props} />;
+  // Remount on every open so the form starts blank each time.
+  return <DisclosureDialog key={props.assignment.id} {...props} />;
 };
 
-function DisclosureDialog({ onClose, course, assignment, student, prefill }: CitationModalProps) {
-  const listed = (prefill?.tools ?? []).filter((t) => (DISCLOSURE_TOOLS as readonly string[]).includes(t));
-  const [tools, setTools] = useState<string[]>(listed);
+// Every field starts blank: the student fills in the statement themselves, nothing is auto-filled.
+function DisclosureDialog({ onClose, course, assignment }: CitationModalProps) {
+  const [tools, setTools] = useState<string[]>([]);
   const [other, setOther] = useState('');
-  const [use, setUse] = useState(prefill?.use.slice(0, MAX_USE) ?? '');
-  const [name, setName] = useState(student.name === 'there' ? '' : student.name);
+  const [use, setUse] = useState('');
+  const [name, setName] = useState('');
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const statementRef = useRef<HTMLPreElement>(null);
   const firstFieldRef = useRef<HTMLInputElement>(null);
@@ -169,7 +148,6 @@ function DisclosureDialog({ onClose, course, assignment, student, prefill }: Cit
           <p className="text-sm text-neutral-700">
             Fill this in to make a disclosure statement you can paste into your Canvas submission. It only includes what
             you enter here.
-            {prefill && ' We started it from your question in the chat. Change anything that isn’t right.'}
           </p>
 
           <fieldset className="space-y-2">
