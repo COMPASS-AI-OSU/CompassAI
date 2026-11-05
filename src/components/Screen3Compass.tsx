@@ -253,13 +253,14 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
       {/* Assignment Quick Switcher (Listed in Chronological Due Date Order) */}
       {onSwitchAssignment && sortedAssignments.length > 1 && (
         <div className="bg-white border border-neutral-300 rounded-2xl p-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2 text-xs text-neutral-700">
-            <Calendar className="w-3.5 h-3.5 text-[#BA0C2F] shrink-0" />
-            <span className="font-bold text-neutral-900">Current Assignment:</span>
-            <span className="text-neutral-500 text-[11px]">(ordered by due date)</span>
-          </div>
+          <label htmlFor="assignment-switcher" className="flex items-center gap-2 text-xs text-neutral-700 shrink-0">
+            <Calendar className="w-3.5 h-3.5 text-[#BA0C2F] shrink-0" aria-hidden="true" />
+            <span className="font-bold text-neutral-900">Assignment</span>
+            <span className="text-neutral-500 text-[11px]">(by due date)</span>
+          </label>
 
           <select
+            id="assignment-switcher"
             value={assignment.id}
             onChange={(e) => {
               const target = sortedAssignments.find((a) => a.id === e.target.value);
@@ -268,11 +269,12 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
                 setMessages([]); // Reset chat when switching assignments
               }
             }}
-            className="text-xs bg-neutral-50 hover:bg-neutral-100 font-semibold text-neutral-900 border border-neutral-300 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#BA0C2F] cursor-pointer"
+            className="w-full sm:w-auto sm:max-w-sm min-w-0 text-xs bg-neutral-50 hover:bg-neutral-100 font-semibold text-neutral-900 border border-neutral-300 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#BA0C2F] cursor-pointer text-ellipsis"
           >
+            {/* Short form: number, name and compact date. The full wording is on the policy table. */}
             {sortedAssignments.map((a, idx) => (
-              <option key={a.id} value={a.id}>
-                #{idx + 1}: {a.title} (Due: {a.dueDate})
+              <option key={a.id} value={a.id} title={`${a.title}, due ${a.dueDate}`}>
+                {idx + 1}. {a.title.length > 40 ? `${a.title.slice(0, 39).trimEnd()}…` : a.title} · {a.dueShort}
               </option>
             ))}
           </select>

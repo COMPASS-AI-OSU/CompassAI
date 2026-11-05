@@ -9,7 +9,12 @@ export interface QuickPrompt {
 export interface Assignment {
   id: string;
   title: string;
+  /** The due date exactly as the syllabus words it, e.g. "Wednesday, October 22nd, between 7am and 11:59 PM EST". */
   dueDate: string;
+  /** Compact form for tight spaces (#cleanup): "Wed, Oct 22", or "Friday of each week" when there's no single date. */
+  dueShort: string;
+  /** The time, when the syllabus gives one: "by 11:59 PM" or "7 AM – 11:59 PM". */
+  dueTime?: string;
   dueDateTimestamp?: number; // For sorting by due date; assignments with no date sort last
   aiStatus: AIPolicyStatus;
   aiStatusLabel: string;
