@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Course, Assignment, StudentProfile, ChatMessage } from '../types';
 import { CitationModal, toolsMentionedIn, type DisclosurePrefill } from './CitationModal';
+import { SourceCitationModal } from './SourceCitationModal';
 import {
   ArrowLeft,
   Send,
@@ -15,6 +16,7 @@ import {
   GraduationCap,
   Loader2,
   LogIn,
+  BookOpen,
 } from 'lucide-react';
 
 interface Screen3CompassProps {
@@ -47,6 +49,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
   const [askError, setAskError] = useState<string | null>(null);
   const canAsk = isSignedIn && !sessionEnded;
   const [isCitationModalOpen, setIsCitationModalOpen] = useState(false);
+  const [isSourceCitationOpen, setIsSourceCitationOpen] = useState(false);
   const latestQuestionRef = useRef<HTMLDivElement>(null);
 
   const studentFirstName = student.name.split(' ')[0];
@@ -192,6 +195,16 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
         </button>
 
         <div className="flex items-center gap-2">
+
+          <button
+            onClick={() => setIsSourceCitationOpen(true)}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-800 hover:text-[#BA0C2F] bg-white border border-neutral-300 rounded-xl px-3 py-2 transition-colors cursor-pointer shadow-2xs"
+            title="Cite a website, book or journal article in APA, MLA, Chicago, Harvard or IEEE"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[#BA0C2F]" aria-hidden="true" />
+            <span className="hidden sm:inline">Cite a source</span>
+            <span className="sm:hidden">Cite</span>
+          </button>
 
           {canDisclose && (
             <button
@@ -549,6 +562,8 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
         </div>
       </div>
       )}
+
+      <SourceCitationModal isOpen={isSourceCitationOpen} onClose={() => setIsSourceCitationOpen(false)} />
 
       {/* Citation Modal */}
       <CitationModal
