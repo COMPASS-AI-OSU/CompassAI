@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { signIn, signUp, type FormState } from '@/app/(auth)/actions';
 import { FormAlert, SubmitButton, TextField, submitWithoutReset } from './fields';
+import { HEARD_ABOUT } from '@/lib/heard-about';
 
 /**
  * Sign-in and Create-account form, laid out like the whiteboard sketch:
@@ -66,6 +67,28 @@ export function CredentialsForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           error={fe.password}
           maxLength={72}
         />
+
+        {/* Launch analytics: saved with the sign-up as one of these choices, never as free text. */}
+        {isSignUp && (
+          <div className="space-y-1.5">
+            <label htmlFor="heard_about" className="block text-sm font-bold text-neutral-900">
+              How did you hear about us? <span className="font-medium text-neutral-600">(optional)</span>
+            </label>
+            <select
+              id="heard_about"
+              name="heard_about"
+              defaultValue=""
+              className="w-full px-3.5 py-2.5 text-base sm:text-sm bg-white border-2 rounded-xl text-neutral-950 border-neutral-400 focus:border-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-1 transition-colors cursor-pointer"
+            >
+              <option value="">Choose one</option>
+              {HEARD_ABOUT.map((h) => (
+                <option key={h.value} value={h.value}>
+                  {h.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Bottom-left box: "I'm an instructor" toggle */}

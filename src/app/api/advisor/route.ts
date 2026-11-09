@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getPublishedCourse } from "@/app/student-courses/actions";
 import { NO_COURSE_POLICY } from "@/lib/student-course";
 import { getCurrentUser } from "@/lib/auth";
+import { firstRef, logEvent } from "@/lib/events";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -93,7 +94,15 @@ export async function POST(request: Request) {
     return Response.json({ error: "Compass couldn't save your question. Try again." }, { status: 500 });
   }
 
+  // Launch analytics: Compass answering a student about their course is our core action.
+  // Off-topic replies don't count. Saves the account ID and first-visit tag, never the question.
+  const logCoreAction = async (verdict: string) => {
+    if (verdict === "off_topic") return;
+    await logEvent({ event: "core_action", actorId: user.id, signedIn: true, channel: await firstRef() });
+  };
+
   if (saved) {
+    await logCoreAction(saved.verdict);
     return Response.json({
       verdict: saved.verdict as CompassVerdict,
       answer: saved.answer,
@@ -154,5 +163,6 @@ export async function POST(request: Request) {
     console.error("Couldn't save the answer:", updateError.message);
   }
 
+  await logCoreAction(result.verdict);
   return Response.json({ ...result, suggestedContact, reused: false });
 }

@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser, safeNextPath } from '@/lib/auth';
+import { cleanHeardAbout, firstRef, logEvent } from '@/lib/events';
 
 export type Field = 'email' | 'password' | 'confirm' | 'code';
 
@@ -158,7 +159,7 @@ export async function signUp(_prev: FormState | undefined, formData: FormData): 
   // already confirmed. Supabase stores only a hash of the password, never the
   // password itself. The role is set here, on the server, in app_metadata.
   const admin = createAdminClient();
-  const { error: createError } = await admin.auth.admin.createUser({
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -174,6 +175,18 @@ export async function signUp(_prev: FormState | undefined, formData: FormData): 
   // Sign the new account straight in.
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+  // Launch analytics: the new account's ID, the ?ref= tag from their first visit, and their
+  // answer to "How did you hear about us?" (a fixed list). Never the email.
+  if (created?.user) {
+    await logEvent({
+      event: 'sign_up',
+      actorId: created.user.id,
+      signedIn: true,
+      channel: await firstRef(),
+      heardAbout: cleanHeardAbout(text(formData, 'heard_about')),
+    });
+  }
+
   if (signInError) {
     return { error: 'Your account was created, but we couldn’t sign you in. Try signing in.', values };
   }
