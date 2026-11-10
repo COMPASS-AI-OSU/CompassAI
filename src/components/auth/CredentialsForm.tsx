@@ -137,7 +137,7 @@ export function CredentialsForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
             </Link>
           </li>
           <li>
-            <Link href="/" className="text-sm font-semibold text-neutral-700 underline underline-offset-4 hover:text-neutral-950 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]">
+            <Link href="/courses" className="text-sm font-semibold text-neutral-700 underline underline-offset-4 hover:text-neutral-950 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]">
               Browse courses without signing in
             </Link>
           </li>
