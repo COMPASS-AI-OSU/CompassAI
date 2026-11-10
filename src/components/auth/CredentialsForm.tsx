@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { signIn, signUp, type FormState } from '@/app/(auth)/actions';
 import { FormAlert, SubmitButton, TextField, submitWithoutReset } from './fields';
 import { HEARD_ABOUT } from '@/lib/heard-about';
+import { readFirstTag } from '@/lib/first-ref';
 
 /**
  * Sign-in and Create-account form, laid out like the whiteboard sketch:
@@ -31,8 +32,19 @@ export function CredentialsForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
     'font-bold text-[#BA0C2F] underline underline-offset-4 decoration-2 hover:text-[#990000] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-2';
 
   return (
-    <form onSubmit={submitWithoutReset(formAction)} noValidate className="grid grid-cols-1 md:grid-cols-12 gap-x-8 gap-y-6">
+    <form
+      onSubmit={(event) => {
+        // Send this browser's first ?ref= tag with the sign-up request (launch analytics).
+        const refField = event.currentTarget.elements.namedItem('ref');
+        if (refField instanceof HTMLInputElement) refField.value = readFirstTag() ?? '';
+        submitWithoutReset(formAction)(event);
+      }}
+      noValidate
+      className="grid grid-cols-1 md:grid-cols-12 gap-x-8 gap-y-6"
+    >
       <input type="hidden" name="next" value={next} />
+      {/* The ?ref= tag from this browser's first visit, sent with the sign-up (launch analytics). */}
+      {isSignUp && <input type="hidden" name="ref" defaultValue="" />}
 
       {/* Middle column: messages and the email + password fields */}
       <div className="md:col-start-5 md:col-span-5 md:row-start-1 space-y-4">

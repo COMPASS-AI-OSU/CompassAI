@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser, safeNextPath } from '@/lib/auth';
-import { cleanHeardAbout, firstRef, logEvent } from '@/lib/events';
+import { cleanHeardAbout, cleanRef, firstRef, logEvent } from '@/lib/events';
 
 export type Field = 'email' | 'password' | 'confirm' | 'code';
 
@@ -182,7 +182,8 @@ export async function signUp(_prev: FormState | undefined, formData: FormData): 
       event: 'sign_up',
       actorId: created.user.id,
       signedIn: true,
-      channel: await firstRef(),
+      // The tag the form sent from this browser's first visit; the server's cookie as a fallback.
+      channel: cleanRef(text(formData, 'ref')) ?? (await firstRef()),
       heardAbout: cleanHeardAbout(text(formData, 'heard_about')),
     });
   }
