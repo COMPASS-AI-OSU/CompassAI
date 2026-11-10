@@ -16,14 +16,18 @@ import { Screen3Compass } from './Screen3Compass';
 import { CourseSwitcher } from './CourseSwitcher';
 import { compassMessageFrom, timeAgo } from '@/lib/compass-message';
 
-/** "smith.123@osu.edu" becomes "Smith". We only collect an email, so the name comes from it. */
+/**
+ * "smith.123@osu.edu" becomes "Smith". We only collect an email, so the name comes from it.
+ * Empty when there's no usable name; greetings then leave the name out.
+ */
 function nameFromEmail(email: string): string {
-  const first = email.split('@')[0].split(/[._-]/)[0] || 'there';
+  const first = email.split('@')[0].split(/[._-]/)[0] ?? '';
   return first.charAt(0).toUpperCase() + first.slice(1);
 }
 
 function profileFor(user: SessionUser | null): StudentProfile {
-  if (!user) return { id: 'guest', name: 'there', email: '', major: '', year: '' };
+  // Logged-out visitors have no name (issue #42), so they see "Welcome" and "Hi!".
+  if (!user) return { id: 'guest', name: '', email: '', major: '', year: '' };
   return { id: user.id, name: nameFromEmail(user.email), email: user.email, major: '', year: '' };
 }
 
