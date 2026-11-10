@@ -55,6 +55,26 @@ export async function firstRef(): Promise<string | null> {
   return cleanRef((await cookies()).get(FIRST_REF_COOKIE)?.value);
 }
 
+/**
+ * The channel an account signed up with (from its sign_up row), so every later row for that
+ * person carries the same tag, on any device. Null for accounts made before tracking.
+ */
+export async function accountChannel(accountId: string): Promise<string | null> {
+  try {
+    const { data } = await createAdminClient()
+      .from('events')
+      .select('channel')
+      .eq('event', 'sign_up')
+      .eq('actor_id', accountId)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return cleanRef(data?.channel);
+  } catch {
+    return null;
+  }
+}
+
 /** Saves one event. Never throws: analytics must not break the page or the action it's in. */
 export async function logEvent(row: {
   event: EventName;
