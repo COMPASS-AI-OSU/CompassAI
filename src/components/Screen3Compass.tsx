@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Course, Assignment, StudentProfile, ChatMessage } from '../types';
 import { CitationModal } from './CitationModal';
 import { SourceCitationModal } from './SourceCitationModal';
+import { compassMessageFrom, type CompassAnswer } from '@/lib/compass-message';
 import {
   ArrowLeft,
   Send,
@@ -27,7 +28,10 @@ interface Screen3CompassProps {
   isSignedIn: boolean;
   onBack: () => void;
   onSwitchAssignment?: (assignment: Assignment) => void;
-  onSaveRecentSession: (questionSnippet: string) => void;
+  /** Called after each answered question, so "Pick up where you left off" shows the latest one (#23). */
+  onAnswered?: (question: string, answer: CompassAnswer) => void;
+  /** A saved conversation to show when the chat opens, from "Pick up where you left off" (#23). */
+  initialMessages?: ChatMessage[];
   /** "Course" dropdown listing My Courses (#14). */
   courseSwitcher?: React.ReactNode;
 }
@@ -39,11 +43,12 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
   isSignedIn,
   onBack,
   onSwitchAssignment,
-  onSaveRecentSession,
+  onAnswered,
+  initialMessages,
   courseSwitcher,
 }) => {
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages ?? []);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
   const [askError, setAskError] = useState<string | null>(null);
@@ -81,7 +86,6 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
     setMessages((prev) => [...prev, userMsg]);
     setInputText('');
     setIsLoading(true);
-    onSaveRecentSession(questionText);
 
     try {
       const response = await fetch('/api/advisor', {
@@ -113,37 +117,9 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
         return;
       }
 
-      const isOffTopic = data.verdict === 'off_topic';
-      const isCovered = data.verdict !== 'ask_instructor';
-      const compassMsg: ChatMessage = isOffTopic
-        ? {
-            // Off-topic (#18): just the polite message, with no verdict and no syllabus quote.
-            id: `c-${Date.now() + 1}`,
-            sender: 'compass',
-            text: data.answer,
-            timestamp: 'Just now',
-            verdictType: 'out_of_scope',
-          }
-        : {
-            id: `c-${Date.now() + 1}`,
-            sender: 'compass',
-            text: data.answer,
-            timestamp: 'Just now',
-            verdictType:
-              data.verdict === 'allowed'
-                ? 'allowed'
-                : data.verdict === 'not_allowed'
-                  ? 'prohibited'
-                  : 'contact_instructor',
-            sourceReliedOn: data.quote ? `“${data.quote.replace(/^[“"]+|[”"]+$/g, '')}”` : undefined,
-            isSure: isCovered,
-            sureReason: isCovered
-              ? `Quoted from the ${course.code} syllabus`
-              : 'The syllabus doesn’t clearly cover this question',
-            suggestedContact: data.suggestedContact,
-          };
-
+      const compassMsg = compassMessageFrom(data, course.code, `c-${Date.now() + 1}`);
       setMessages((prev) => [...prev, compassMsg]);
+      if (data.verdict !== 'off_topic') onAnswered?.(questionText, data);
     } catch (err) {
       console.warn('Compass request failed:', err);
       setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));

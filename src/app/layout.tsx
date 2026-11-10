@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { VisitBeacon } from "@/components/VisitBeacon";
 
 export const metadata: Metadata = {
   title: "CompassAI - Student Course Policy & AI Navigator",
@@ -26,7 +27,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Saves a "visit" event (launch analytics, no names or emails). */}
+        <VisitBeacon />
+      </body>
     </html>
   );
 }
