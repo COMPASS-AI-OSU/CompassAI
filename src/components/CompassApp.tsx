@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Course, Assignment, ChatMessage, CourseSummary, RecentSession, StudentProfile, SessionUser } from '@/types';
+import { Course, Assignment, ChatMessage, CourseSummary, HistoryGroup, RecentSession, StudentProfile, SessionUser } from '@/types';
 import { getPublishedCourse } from '@/app/student-courses/actions';
 import { Header } from './Header';
 import { StepBreadcrumb } from './StepBreadcrumb';
@@ -31,11 +31,23 @@ function profileFor(user: SessionUser | null): StudentProfile {
   return { id: user.id, name: user.firstName ?? nameFromEmail(user.email), email: user.email, major: '', year: '' };
 }
 
+/** A saved conversation about one assignment as chat bubbles, oldest first like any chat (#22). */
+function threadFrom(group: HistoryGroup, courseCode: string): ChatMessage[] {
+  return [...group.items].reverse().flatMap((item, i) => {
+    const when = timeAgo(item.answeredAt);
+    return [
+      { id: `saved-q-${i}`, sender: 'user' as const, text: item.question, timestamp: when },
+      compassMessageFrom({ ...item, suggestedContact: group.suggestedContact }, courseCode, `saved-a-${i}`, when),
+    ];
+  });
+}
+
 export default function CompassApp({
   user,
   initialCourses,
   coursesError,
   initialRecentSession = null,
+  initialHistory = [],
 }: {
   user: SessionUser | null;
   /** Every published course, loaded on the server (#14). */
@@ -43,6 +55,8 @@ export default function CompassApp({
   coursesError?: string;
   /** The student's last answered question, loaded on the server (#23). */
   initialRecentSession?: RecentSession | null;
+  /** The student's saved questions and answers, grouped by assignment, newest first (#22). */
+  initialHistory?: HistoryGroup[];
 }) {
   const [currentScreen, setCurrentScreen] = useState<1 | 2 | 3>(1);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -54,6 +68,12 @@ export default function CompassApp({
   const [recentSession, setRecentSession] = useState<RecentSession | null>(initialRecentSession);
   const [resumeMessages, setResumeMessages] = useState<ChatMessage[] | undefined>(undefined);
   const [chatKey, setChatKey] = useState(0);
+  // Question history (#22). Kept current in the browser as new answers come in.
+  const [history, setHistory] = useState<HistoryGroup[]>(initialHistory);
+  const savedThread = (course: Course, assignmentId: string): ChatMessage[] | undefined => {
+    const group = history.find((g) => g.courseId === course.id && g.assignmentId === assignmentId);
+    return group ? threadFrom(group, course.code) : undefined;
+  };
   const currentStudent = profileFor(user);
 
   const goTo = (screen: 1 | 2 | 3) => {
@@ -105,10 +125,12 @@ export default function CompassApp({
       const when = timeAgo(recent.answeredAt);
       setSelectedCourse(course);
       setSelectedAssignment(assignment);
-      setResumeMessages([
-        { id: 'resume-q', sender: 'user', text: recent.question, timestamp: when },
-        compassMessageFrom(recent, course.code, 'resume-a', when),
-      ]);
+      setResumeMessages(
+        savedThread(course, assignment.id) ?? [
+          { id: 'resume-q', sender: 'user', text: recent.question, timestamp: when },
+          compassMessageFrom(recent, course.code, 'resume-a', when),
+        ]
+      );
       setChatKey((k) => k + 1);
       goTo(3);
     } catch {
@@ -118,15 +140,42 @@ export default function CompassApp({
     }
   };
 
+  /** Opens a saved conversation from "Your questions" (#22). */
+  const handleOpenHistory = async (group: HistoryGroup) => {
+    if (loadingCourseId) return;
+    setLoadingCourseId(group.courseId);
+    setLoadError(null);
+    try {
+      const { course, error } = await getPublishedCourse(group.courseId);
+      const assignment = course?.assignments.find((a) => a.id === group.assignmentId);
+      if (!course || !assignment) {
+        setHistory((h) => h.filter((g) => g !== group));
+        setLoadError(error ?? 'That assignment isn’t available anymore. Your instructor may have unpublished it.');
+        return;
+      }
+      setSelectedCourse(course);
+      setSelectedAssignment(assignment);
+      setResumeMessages(threadFrom(group, course.code));
+      setChatKey((k) => k + 1);
+      goTo(3);
+    } catch {
+      setLoadError('We couldn’t load this course. Check your connection and try again.');
+    } finally {
+      setLoadingCourseId(null);
+    }
+  };
+
+  /** Switching assignments on the Compass screen: start from that assignment's saved questions. */
   const handleSelectAssignment = (assignment: Assignment) => {
+    if (assignment.id === selectedAssignment?.id) return;
     setSelectedAssignment(assignment);
-    // A reopened conversation belongs to its own assignment only.
-    if (assignment.id !== selectedAssignment?.id) setResumeMessages(undefined);
+    setResumeMessages(selectedCourse ? savedThread(selectedCourse, assignment.id) : undefined);
+    setChatKey((k) => k + 1);
   };
 
   const handleContinueToCompass = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
-    setResumeMessages(undefined);
+    setResumeMessages(selectedCourse ? savedThread(selectedCourse, assignment.id) : undefined);
     setChatKey((k) => k + 1);
     goTo(3);
   };
@@ -184,6 +233,8 @@ export default function CompassApp({
               onOpenCourse={(id) => loadCourse(id, 2)}
               recentSession={user?.role === 'student' ? recentSession : null}
               onResumeRecent={handleResumeRecent}
+              history={user?.role === 'student' ? history : []}
+              onOpenHistory={handleOpenHistory}
             />
           )}
 
@@ -212,6 +263,30 @@ export default function CompassApp({
               onAnswered={(question, answer) => {
                 // Keep the card current without another trip to the server (#23).
                 if (user?.role !== 'student') return;
+                const item = {
+                  question,
+                  verdict: answer.verdict as RecentSession['verdict'],
+                  answer: answer.answer,
+                  quote: answer.quote ?? null,
+                  answeredAt: new Date().toISOString(),
+                };
+                // Newest answer first, and its assignment moves to the top of "Your questions" (#22).
+                setHistory((groups) => {
+                  const match = (g: HistoryGroup) =>
+                    g.courseId === selectedCourse.id && g.assignmentId === selectedAssignment.id;
+                  const existing = groups.find(match);
+                  const updated: HistoryGroup = existing
+                    ? { ...existing, items: [item, ...existing.items] }
+                    : {
+                        courseId: selectedCourse.id,
+                        courseCode: selectedCourse.code,
+                        assignmentId: selectedAssignment.id,
+                        assignmentTitle: selectedAssignment.title,
+                        suggestedContact: answer.suggestedContact ?? `${selectedCourse.professor} or your recitation TA`,
+                        items: [item],
+                      };
+                  return [updated, ...groups.filter((g) => !match(g))];
+                });
                 setRecentSession({
                   courseId: selectedCourse.id,
                   courseCode: selectedCourse.code,

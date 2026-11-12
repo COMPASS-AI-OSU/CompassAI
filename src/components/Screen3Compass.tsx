@@ -189,7 +189,8 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
             <button
               onClick={handleResetChat}
               className="inline-flex items-center gap-1 text-xs text-neutral-500 hover:text-neutral-900 p-2 rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
-              title="Reset Chat"
+              title="Clear this chat (your saved questions stay under Your questions)"
+              aria-label="Clear this chat"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -232,8 +233,8 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
             onChange={(e) => {
               const target = sortedAssignments.find((a) => a.id === e.target.value);
               if (target) {
+                // The parent opens a fresh chat with that assignment's saved questions (#22).
                 onSwitchAssignment(target);
-                setMessages([]); // Reset chat when switching assignments
               }
             }}
             className="w-full sm:w-auto sm:max-w-sm min-w-0 text-xs bg-neutral-50 hover:bg-neutral-100 font-semibold text-neutral-900 border border-neutral-300 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#BA0C2F] cursor-pointer text-ellipsis"
