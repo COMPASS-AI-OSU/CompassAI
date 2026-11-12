@@ -35,7 +35,7 @@ async function NewCourseContent() {
           <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Back to your courses
         </Link>
         <div>
-          <h1 className="text-3xl font-bold font-serif text-neutral-950">Add a course</h1>
+          <h1 className="text-3xl font-semibold font-serif text-neutral-950">Add a course</h1>
           <p className="text-sm text-neutral-700 mt-1 max-w-2xl">
             Upload your syllabus. CompassAI reads it and fills in the course and every assignment with its AI rule. You’ll
             check each assignment before students can see anything.

@@ -14,7 +14,6 @@ import {
 interface Screen2AssignmentsProps {
   course: Course;
   selectedAssignment: Assignment | null;
-  onSelectAssignment: (assignment: Assignment) => void;
   onBack: () => void;
   onContinueToCompass: (assignment: Assignment) => void;
   /** "Course" dropdown listing My Courses (#14). */
@@ -24,7 +23,6 @@ interface Screen2AssignmentsProps {
 export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
   course,
   selectedAssignment,
-  onSelectAssignment,
   onBack,
   onContinueToCompass,
   courseSwitcher,
@@ -80,13 +78,13 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
       {courseSwitcher}
 
       {/* Header section matching whiteboard: Course Name & Prof Name */}
-      <div className="bg-white border-t-4 border-t-[#BA0C2F] border-x border-b border-neutral-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
+      <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
-            <div className="text-xs uppercase tracking-wider font-bold text-[#BA0C2F]">
-              The Ohio State University · {course.department}
+            <div className="font-hand text-xl text-[#BA0C2F] -rotate-1 origin-left">
+              Ohio State · {course.department}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-950 font-serif tracking-tight mt-0.5">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-950 font-serif tracking-tight mt-0.5">
               {course.code}: {course.name}
             </h1>
             <div className="text-sm sm:text-base font-semibold text-neutral-700 mt-1">
@@ -175,11 +173,20 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
           {sortedAndFilteredAssignments.map((assignment, index) => {
             const isSelected = selectedAssignment?.id === assignment.id;
             return (
+              // One click (or Enter) opens Compass for this assignment (no separate Proceed step).
               <div
                 key={assignment.id}
-                onClick={() => onSelectAssignment(assignment)}
-                onDoubleClick={() => onContinueToCompass(assignment)}
-                className={`transition-all cursor-pointer p-4 sm:p-5 ${
+                role="button"
+                tabIndex={0}
+                aria-label={`Ask Compass about ${assignment.title}`}
+                onClick={() => onContinueToCompass(assignment)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onContinueToCompass(assignment);
+                  }
+                }}
+                className={`group transition-colors cursor-pointer p-4 sm:p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#BA0C2F] ${
                   isSelected
                     ? 'bg-[#BA0C2F]/5 border-l-4 border-l-[#BA0C2F]'
                     : 'hover:bg-neutral-50 border-l-4 border-l-transparent'
@@ -231,25 +238,15 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
                     />
                   </div>
 
-                  {/* Column 4: Comment from Instructor & Quick Proceed (col-span-3, clean typography) */}
+                  {/* Column 4: Comment from Instructor, and an arrow showing the row opens Compass */}
                   <div className="col-span-3 pl-1 flex items-center justify-between gap-2">
                     <p className="text-xs text-neutral-700 leading-relaxed italic line-clamp-3 flex-1">
                       {assignment.instructorComment ? <>&ldquo;{assignment.instructorComment}&rdquo;</> : <span className="not-italic text-neutral-500">No comment from your instructor.</span>}
                     </p>
-                    {isSelected && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onContinueToCompass(assignment);
-                        }}
-                        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-[#BA0C2F] hover:bg-[#990000] active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer ring-2 ring-[#BA0C2F]/20 animate-in fade-in zoom-in-95 duration-150"
-                        title="Proceed to Compass"
-                      >
-                        <span>Proceed</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    <ArrowRight
+                      className="w-4 h-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 group-hover:text-[#BA0C2F] group-focus-visible:text-[#BA0C2F]"
+                      aria-hidden="true"
+                    />
                   </div>
                 </div>
 
@@ -265,19 +262,7 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
                       )}
                       <span>{assignment.title}</span>
                     </div>
-                    {isSelected && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onContinueToCompass(assignment);
-                        }}
-                        className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#BA0C2F] hover:bg-[#990000] active:scale-95 text-white text-xs font-bold shadow-md transition-all cursor-pointer animate-in fade-in zoom-in-95"
-                      >
-                        <span>Proceed</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    <ArrowRight className="w-4 h-4 shrink-0 mt-0.5 text-neutral-400" aria-hidden="true" />
                   </div>
 
                   <div className="flex items-center justify-between gap-2 text-xs">

@@ -44,7 +44,7 @@ async function InstructorContent() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold font-serif text-neutral-950">Your courses</h1>
+            <h1 className="text-3xl font-semibold font-serif text-neutral-950">Your courses</h1>
             <p className="text-sm text-neutral-700 mt-1">Only you can see and change the courses you create.</p>
           </div>
           <div className="flex flex-wrap gap-3">
