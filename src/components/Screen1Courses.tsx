@@ -15,11 +15,8 @@ interface Screen1CoursesProps {
   selectedCourseId: string | null;
   loadingCourseId: string | null;
   loadError: string | null;
-  /** Load a course and mark it selected. */
-  onSelectCourse: (courseId: string) => void;
   /** Load a course and go straight to its policy table. */
   onOpenCourse: (courseId: string) => void;
-  onContinue: () => void;
   /** The student's last answered question (#23). Null hides the card. */
   recentSession?: RecentSession | null;
   onResumeRecent?: () => void;
@@ -33,9 +30,7 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
   selectedCourseId,
   loadingCourseId,
   loadError,
-  onSelectCourse,
   onOpenCourse,
-  onContinue,
   recentSession = null,
   onResumeRecent,
 }) => {
@@ -157,72 +152,51 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
             const isSelected = selectedCourseId === course.id;
             const isLoading = loadingCourseId === course.id;
             return (
-              <div
+              // One click opens the course's policy table (no separate Proceed step).
+              <button
+                type="button"
                 key={course.id}
-                onClick={() => onSelectCourse(course.id)}
-                onDoubleClick={() => onOpenCourse(course.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    if (isSelected) onContinue();
-                    else onSelectCourse(course.id);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
+                onClick={() => onOpenCourse(course.id)}
                 aria-busy={isLoading}
-                className={`w-full text-left grid grid-cols-12 gap-3 px-4 py-3.5 sm:py-4 items-center transition-all cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] ${
+                className={`w-full text-left grid grid-cols-12 gap-3 px-4 py-3.5 sm:py-4 items-center transition-colors cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#BA0C2F] ${
                   isSelected ? 'bg-[#BA0C2F]/5 border-l-4 border-l-[#BA0C2F]' : 'hover:bg-neutral-50 border-l-4 border-l-transparent'
                 }`}
               >
-                <div className="col-span-6 sm:col-span-7 pr-2">
-                  <div className="flex items-center gap-2">
+                <span className="block col-span-6 sm:col-span-7 pr-2 min-w-0">
+                  <span className="flex items-center gap-2">
                     <span className="font-bold text-sm sm:text-base text-neutral-950 group-hover:text-[#BA0C2F] transition-colors">
                       {course.code || 'Untitled course'}
                     </span>
-                    <span className="hidden sm:inline-block text-xs text-neutral-400">·</span>
+                    <span className="hidden sm:inline-block text-xs text-neutral-400" aria-hidden="true">·</span>
                     <span className="hidden sm:inline-block text-xs font-medium text-neutral-500">
                       {course.assignmentCount === 1 ? '1 assignment' : `${course.assignmentCount} assignments`}
                     </span>
-                  </div>
-                  <div className="text-xs sm:text-sm text-neutral-600 truncate mt-0.5 font-medium">
+                  </span>
+                  <span className="block text-xs sm:text-sm text-neutral-600 truncate mt-0.5 font-medium">
                     {[course.name, course.term].filter(Boolean).join(' · ')}
-                  </div>
-                </div>
+                  </span>
+                </span>
 
-                <div className="col-span-6 sm:col-span-5 flex items-center justify-between">
+                <span className="col-span-6 sm:col-span-5 flex items-center justify-between min-w-0">
                   <span className="text-xs sm:text-sm font-semibold text-neutral-800 group-hover:text-neutral-950 truncate pr-1">
                     {course.professor || '—'}
                   </span>
-                  <div className="shrink-0 ml-2 flex items-center gap-2">
+                  <span className="shrink-0 ml-2 flex items-center gap-2">
                     {isLoading ? (
                       <span className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-700">
-                        <Loader2 className="w-4 h-4 animate-spin text-[#BA0C2F]" aria-hidden="true" /> Loading…
+                        <Loader2 className="w-4 h-4 animate-spin text-[#BA0C2F]" aria-hidden="true" /> Opening…
                       </span>
-                    ) : isSelected ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onContinue();
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-[#BA0C2F] hover:bg-[#990000] active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all cursor-pointer ring-2 ring-[#BA0C2F]/20"
-                        title={`Proceed with ${course.code ?? 'this course'}`}
-                      >
-                        <span>Proceed</span>
-                        <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                      </button>
                     ) : (
-                      <div
-                        className="w-7 h-7 rounded-full flex items-center justify-center transition-all bg-neutral-200 text-neutral-500 group-hover:bg-[#BA0C2F] group-hover:text-white"
-                        title="Select course"
+                      <span
+                        className="w-7 h-7 rounded-full flex items-center justify-center transition-colors bg-neutral-200 text-neutral-500 group-hover:bg-[#BA0C2F] group-hover:text-white"
+                        aria-hidden="true"
                       >
-                        <ChevronRight className="w-4 h-4" aria-hidden="true" />
-                      </div>
+                        <ChevronRight className="w-4 h-4" />
+                      </span>
                     )}
-                  </div>
-                </div>
-              </div>
+                  </span>
+                </span>
+              </button>
             );
           })}
 

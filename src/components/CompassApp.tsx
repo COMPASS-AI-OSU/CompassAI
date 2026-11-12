@@ -118,10 +118,6 @@ export default function CompassApp({
     }
   };
 
-  const handleContinueToAssignments = () => {
-    if (selectedCourse) goTo(2);
-  };
-
   const handleSelectAssignment = (assignment: Assignment) => {
     setSelectedAssignment(assignment);
     // A reopened conversation belongs to its own assignment only.
@@ -185,9 +181,7 @@ export default function CompassApp({
               selectedCourseId={selectedCourse?.id ?? null}
               loadingCourseId={loadingCourseId}
               loadError={loadError}
-              onSelectCourse={(id) => loadCourse(id)}
               onOpenCourse={(id) => loadCourse(id, 2)}
-              onContinue={handleContinueToAssignments}
               recentSession={user?.role === 'student' ? recentSession : null}
               onResumeRecent={handleResumeRecent}
             />
