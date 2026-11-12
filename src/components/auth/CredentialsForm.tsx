@@ -59,6 +59,18 @@ export function CredentialsForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           <FormAlert tone="info">Sign in to open that page.</FormAlert>
         )}
 
+        {isSignUp && (
+          <TextField
+            id="firstName"
+            label="What should we call you? (optional)"
+            autoComplete="given-name"
+            hint="Your first name, used only to greet you."
+            defaultValue={state?.values?.firstName}
+            error={fe.firstName}
+            maxLength={40}
+          />
+        )}
+
         <TextField
           id="email"
           label="Email"

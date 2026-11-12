@@ -28,7 +28,7 @@ function nameFromEmail(email: string): string {
 function profileFor(user: SessionUser | null): StudentProfile {
   // Logged-out visitors have no name (issue #42), so they see "Welcome" and "Hi!".
   if (!user) return { id: 'guest', name: '', email: '', major: '', year: '' };
-  return { id: user.id, name: nameFromEmail(user.email), email: user.email, major: '', year: '' };
+  return { id: user.id, name: user.firstName ?? nameFromEmail(user.email), email: user.email, major: '', year: '' };
 }
 
 export default function CompassApp({

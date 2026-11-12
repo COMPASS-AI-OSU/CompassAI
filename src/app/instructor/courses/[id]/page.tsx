@@ -36,7 +36,7 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
   if (!UUID.test(id)) {
     return (
       <>
-        <InstructorHeader email={user.email} />
+        <InstructorHeader email={user.email} firstName={user.firstName} />
         <NotAllowed email={user.email} reason="missing" />
       </>
     );
@@ -53,7 +53,7 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
   if (!course || course.owner_id !== user.id) {
     return (
       <>
-        <InstructorHeader email={user.email} />
+        <InstructorHeader email={user.email} firstName={user.firstName} />
         <NotAllowed email={user.email} reason={course ? 'not-yours' : 'missing'} />
       </>
     );
@@ -76,7 +76,7 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
 
   return (
     <>
-      <InstructorHeader email={user.email} />
+      <InstructorHeader email={user.email} firstName={user.firstName} />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         <Link
           href="/instructor"
