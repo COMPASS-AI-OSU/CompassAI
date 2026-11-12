@@ -4,13 +4,14 @@ import { Lock, LogOut } from 'lucide-react';
 import { signOut } from '@/app/(auth)/actions';
 import { CompassMark } from '@/components/auth/AuthShell';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { NameMenu } from '@/components/NameMenu';
 
 export const buttonLink =
   'inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-2';
 export const primaryButton = `${buttonLink} bg-[#BA0C2F] text-white hover:bg-[#990000] disabled:opacity-60 disabled:cursor-wait cursor-pointer`;
 export const secondaryButton = `${buttonLink} bg-white border-2 border-neutral-900 text-neutral-900 hover:bg-neutral-50 disabled:opacity-60 cursor-pointer`;
 
-export function InstructorHeader({ email }: { email: string }) {
+export function InstructorHeader({ email, firstName }: { email: string; firstName?: string }) {
   return (
     <header className="w-full bg-neutral-50/90 text-neutral-900 border-b border-neutral-300">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -24,7 +25,7 @@ export function InstructorHeader({ email }: { email: string }) {
         </Link>
         <div className="flex items-center gap-3 text-sm">
           <ThemeToggle />
-          <span className="hidden sm:inline text-neutral-700">{email}</span>
+          <NameMenu email={email} firstName={firstName} />
           <form action={signOut}>
             <button
               type="submit"

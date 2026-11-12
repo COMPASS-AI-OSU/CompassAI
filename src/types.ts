@@ -94,4 +94,6 @@ export interface SessionUser {
   id: string;
   email: string;
   role: 'student' | 'instructor';
+  /** The first name they chose, for greetings. Missing if they didn't give one. */
+  firstName?: string;
 }

@@ -1,6 +1,7 @@
 import 'server-only';
 import { connection } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { cleanFirstName } from '@/lib/names';
 
 export type Role = 'student' | 'instructor';
 
@@ -8,6 +9,8 @@ export interface CurrentUser {
   id: string;
   email: string;
   role: Role;
+  /** The first name they chose, for greetings. Missing if they didn't give one. */
+  firstName?: string;
 }
 
 /**
@@ -27,6 +30,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     id: claims.sub,
     email: typeof claims.email === 'string' ? claims.email : '',
     role: claims.app_metadata?.role === 'instructor' ? 'instructor' : 'student',
+    firstName: cleanFirstName(claims.user_metadata?.first_name) ?? undefined,
   };
 }
 

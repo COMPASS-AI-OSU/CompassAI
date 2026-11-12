@@ -2,13 +2,15 @@
 
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { headers } from 'next/headers';
+import { refresh } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser, safeNextPath } from '@/lib/auth';
 import { cleanHeardAbout, cleanRef, firstRef, logEvent } from '@/lib/events';
+import { checkFirstName, cleanFirstName } from '@/lib/names';
 
-export type Field = 'email' | 'password' | 'confirm' | 'code';
+export type Field = 'firstName' | 'email' | 'password' | 'confirm' | 'code';
 
 export interface FormState {
   /** Problem with the whole form, shown at the top. */
@@ -18,7 +20,7 @@ export interface FormState {
   /** Set when the form worked and the page should show a success message. */
   success?: 'reset-sent';
   /** Values to put back in the form after an error. Never the password. */
-  values?: { email?: string; instructor?: boolean };
+  values?: { firstName?: string; email?: string; instructor?: boolean };
 }
 
 const EMAIL_MAX = 254;
@@ -146,9 +148,13 @@ export async function signUp(_prev: FormState | undefined, formData: FormData): 
   const password = text(formData, 'password');
   const instructor = formData.get('instructor') === 'on';
   const code = text(formData, 'code');
-  const values = { email, instructor };
+  // Optional: only used to greet them. We still never ask for a student ID.
+  const rawFirstName = text(formData, 'firstName');
+  const firstName = cleanFirstName(rawFirstName);
+  const values = { firstName: rawFirstName.slice(0, 60), email, instructor };
 
   const fieldErrors: FormState['fieldErrors'] = {
+    firstName: checkFirstName(rawFirstName),
     email: checkEmail(email, true),
     password: checkNewPassword(password),
     code: checkCode(instructor, code),
@@ -164,6 +170,7 @@ export async function signUp(_prev: FormState | undefined, formData: FormData): 
     password,
     email_confirm: true,
     app_metadata: instructor ? { role: 'instructor' } : {},
+    user_metadata: firstName ? { first_name: firstName } : {},
   });
   if (createError) {
     if (createError.code === 'email_exists' || createError.code === 'user_already_exists') {
@@ -233,6 +240,32 @@ export async function updatePassword(_prev: FormState | undefined, formData: For
   }
 
   redirect(user.role === 'instructor' ? '/instructor' : '/');
+}
+
+export interface NameState {
+  error?: string;
+  /** The name that was saved (empty when they cleared it). */
+  saved?: string;
+}
+
+/** "Change name" in the header: sets or clears the signed-in person's first name. */
+export async function updateFirstName(_prev: NameState | undefined, formData: FormData): Promise<NameState> {
+  const user = await getCurrentUser();
+  if (!user) return { error: 'Sign in again to change your name.' };
+
+  const raw = text(formData, 'firstName');
+  const problem = checkFirstName(raw);
+  if (problem) return { error: problem };
+  const firstName = cleanFirstName(raw);
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ data: { first_name: firstName } });
+  if (error) return { error: 'We couldn’t save your name. Try again in a moment.' };
+
+  // Get a new sign-in token so the name shows everywhere right away.
+  await supabase.auth.refreshSession();
+  refresh();
+  return { saved: firstName ?? '' };
 }
 
 export async function signOut(): Promise<void> {

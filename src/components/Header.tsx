@@ -5,6 +5,7 @@ import { CompassMark } from './auth/AuthShell';
 import { SessionUser } from '../types';
 import { signOut } from '@/app/(auth)/actions';
 import { ThemeToggle } from './ThemeToggle';
+import { NameMenu } from './NameMenu';
 
 interface HeaderProps {
   /** Not shown here anymore: the step bar under the header shows where you are. */
@@ -51,17 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
                   Instructor dashboard
                 </Link>
               )}
-              <div className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-lg border border-neutral-300 bg-white">
-                <div
-                  className="w-6 h-6 rounded-full bg-[#BA0C2F] text-white flex items-center justify-center font-bold text-xs"
-                  aria-hidden="true"
-                >
-                  {user.email.charAt(0).toUpperCase()}
-                </div>
-                <span className="hidden sm:block text-xs font-semibold text-neutral-900 max-w-[180px] truncate">
-                  {user.email}
-                </span>
-              </div>
+              <NameMenu email={user.email} firstName={user.firstName} />
               <form action={signOut}>
                 <button
                   type="submit"

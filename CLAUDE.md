@@ -30,7 +30,7 @@ Every "No" and "Own only" is a business rule. Enforce it on the server **and** i
 
 - Sign-in is email + password with Supabase Auth. Only `@osu.edu` emails can create an account.
 - No confirmation email for now: the server creates accounts already confirmed (`admin.auth.admin.createUser` with `email_confirm: true`) and signs the person in. Supabase stores only a hash of each password; our app never stores or logs passwords.
-- We only collect an email and a password. Never ask for a student ID.
+- We only collect an email, a password and an optional first name (for greetings, saved in `user_metadata.first_name`, checked with `cleanFirstName()` in `src/lib/names.ts`). Never ask for a student ID.
 - The role lives in Supabase `app_metadata.role` (`instructor`, or missing for students). Users can't edit it. Only the server sets it, after checking `INSTRUCTOR_SIGNUP_CODE`.
 - Read the signed-in user with `getCurrentUser()` from `src/lib/auth.ts`. Re-check it in every Server Action and Route Handler.
 - Save the signed-in user's ID with everything they create (`owner_id uuid default auth.uid()`), and add row-level security to every new table.
