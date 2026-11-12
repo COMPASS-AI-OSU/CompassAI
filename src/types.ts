@@ -89,6 +89,26 @@ export interface RecentSession {
   answeredAt: string;
 }
 
+/** One saved Compass answer in a student's question history (#22). */
+export interface HistoryItem {
+  question: string;
+  verdict: CompassVerdict;
+  answer: string;
+  quote: string | null;
+  /** ISO timestamp of when Compass answered. */
+  answeredAt: string;
+}
+
+/** A student's saved questions about one assignment, newest first (#22). */
+export interface HistoryGroup {
+  courseId: string;
+  courseCode: string;
+  assignmentId: string;
+  assignmentTitle: string;
+  suggestedContact: string;
+  items: HistoryItem[];
+}
+
 /** The signed-in person, as the browser sees them. Role is set only by the server. */
 export interface SessionUser {
   id: string;

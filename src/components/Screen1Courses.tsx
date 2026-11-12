@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { CourseSummary, RecentSession, StudentProfile } from '../types';
+import { CourseSummary, HistoryGroup, RecentSession, StudentProfile } from '../types';
 import { MyCoursesPanel } from './MyCoursesPanel';
 import { WaveUnderline } from './Wave';
 import { timeAgo } from '@/lib/compass-message';
-import { Search, ArrowRight, ChevronRight, BookOpen, Loader2, AlertCircle, History } from 'lucide-react';
+import { Search, ArrowRight, ChevronRight, BookOpen, Loader2, AlertCircle, History, MessagesSquare } from 'lucide-react';
 
 interface Screen1CoursesProps {
   student: StudentProfile;
@@ -20,6 +20,9 @@ interface Screen1CoursesProps {
   /** The student's last answered question (#23). Null hides the card. */
   recentSession?: RecentSession | null;
   onResumeRecent?: () => void;
+  /** The student's saved questions, grouped by assignment, newest first (#22). Empty hides the section. */
+  history?: HistoryGroup[];
+  onOpenHistory?: (group: HistoryGroup) => void;
 }
 
 export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
@@ -33,7 +36,12 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
   onOpenCourse,
   recentSession = null,
   onResumeRecent,
+  history = [],
+  onOpenHistory,
 }) => {
+  const [showAllHistory, setShowAllHistory] = useState(false);
+  const HISTORY_PREVIEW = 3;
+  const shownHistory = showAllHistory ? history : history.slice(0, HISTORY_PREVIEW);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Filter as the student types, by code, name or professor (#11).
@@ -107,6 +115,66 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
       )}
 
       <MyCoursesPanel role={role} onOpenCourse={onOpenCourse} openingCourseId={loadingCourseId} />
+
+      {/* Your questions (#22): every saved question and answer, grouped by assignment, newest first. */}
+      {history.length > 0 && (
+        <section aria-labelledby="history-heading" className="bg-white border border-neutral-300 rounded-2xl overflow-hidden">
+          <div className="px-4 sm:px-5 pt-4 pb-3 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#BA0C2F]/10 flex items-center justify-center shrink-0">
+              <MessagesSquare className="w-5 h-5 text-[#BA0C2F]" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <h2 id="history-heading" className="text-sm sm:text-base font-bold text-neutral-950">
+                Your questions
+              </h2>
+              <p className="text-xs text-neutral-600">By assignment, newest first. Only you can see these.</p>
+            </div>
+          </div>
+          <ul className="divide-y divide-neutral-200 border-t border-neutral-200">
+            {shownHistory.map((group) => {
+              const latest = group.items[0];
+              const count = group.items.length;
+              const opening = loadingCourseId === group.courseId;
+              return (
+                <li key={`${group.courseId}:${group.assignmentId}`}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenHistory?.(group)}
+                    disabled={loadingCourseId !== null}
+                    aria-label={`Open your ${count === 1 ? 'question' : `${count} questions`} about ${group.courseCode}, ${group.assignmentTitle}`}
+                    className="w-full text-left px-4 sm:px-5 py-3 flex items-center gap-3 hover:bg-neutral-50 cursor-pointer group disabled:cursor-wait focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#BA0C2F]"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-xs sm:text-sm font-bold text-neutral-950 truncate group-hover:text-[#BA0C2F] transition-colors">
+                        {group.courseCode} · {group.assignmentTitle}
+                      </span>
+                      <span className="block text-xs text-neutral-600 italic truncate mt-0.5">&ldquo;{latest.question}&rdquo;</span>
+                      <span className="block text-[11px] text-neutral-500 font-semibold mt-0.5" suppressHydrationWarning>
+                        {count === 1 ? '1 question' : `${count} questions`} · last {timeAgo(latest.answeredAt).toLowerCase()}
+                      </span>
+                    </span>
+                    {opening ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-[#BA0C2F] shrink-0" aria-hidden="true" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#BA0C2F] shrink-0" aria-hidden="true" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {history.length > HISTORY_PREVIEW && (
+            <button
+              type="button"
+              onClick={() => setShowAllHistory((v) => !v)}
+              aria-expanded={showAllHistory}
+              className="w-full px-4 sm:px-5 py-2.5 border-t border-neutral-200 text-xs font-bold text-neutral-700 hover:text-[#BA0C2F] hover:bg-neutral-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#BA0C2F]"
+            >
+              {showAllHistory ? 'Show fewer' : `Show all ${history.length} assignments`}
+            </button>
+          )}
+        </section>
+      )}
 
       {/* Search Input for fast access */}
       <div className="relative">
