@@ -192,7 +192,6 @@ export default function CompassApp({
             <Screen2Assignments
               course={selectedCourse}
               selectedAssignment={selectedAssignment}
-              onSelectAssignment={handleSelectAssignment}
               onBack={() => goTo(1)}
               onContinueToCompass={handleContinueToCompass}
               courseSwitcher={switcher}
