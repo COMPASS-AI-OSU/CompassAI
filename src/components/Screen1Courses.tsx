@@ -150,7 +150,7 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
                       </span>
                       <span className="block text-xs text-neutral-600 italic truncate mt-0.5">&ldquo;{latest.question}&rdquo;</span>
                       <span className="block text-[11px] text-neutral-500 font-semibold mt-0.5" suppressHydrationWarning>
-                        {count === 1 ? '1 question' : `${count} questions`} · last {timeAgo(latest.answeredAt).toLowerCase()}
+                        {count === 1 ? '1 question' : `${count} questions`} · {timeAgo(latest.answeredAt)}
                       </span>
                     </span>
                     {opening ? (
