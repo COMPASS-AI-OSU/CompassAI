@@ -1,30 +1,76 @@
 @import "tailwindcss";
 
 /*
- * Night mode. <html data-theme="dark"> is set before the page paints by the script in
- * layout.tsx (device setting, or the sun/moon button's saved choice).
+ * Notebook look: warm paper, navy ink, OSU scarlet for accents, and a hand-drawn wave here and there.
+ * The gray scale is re-tinted so every screen picks it up without changing each component.
+ * Fonts come from next/font in layout.tsx.
+ */
+@theme inline {
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-hand: var(--font-caveat), 'Comic Sans MS', cursive;
+}
+
+@theme {
+  /* Paper (low numbers) to navy ink (high numbers). */
+  --color-neutral-50: #fdfbf6;
+  --color-neutral-100: #f7f3ea;
+  --color-neutral-200: #eee8da;
+  --color-neutral-300: #e0d9c8;
+  --color-neutral-400: #b5b1a5;
+  --color-neutral-500: #6d7389;
+  --color-neutral-600: #5a6280;
+  --color-neutral-700: #444e6a;
+  --color-neutral-800: #2f3955;
+  --color-neutral-900: #1e2a44;
+  --color-neutral-950: #131c33;
+
+  /* Ink and paper that swap in night mode (for the few places that need a solid ink pill). */
+  --color-ink: #1e2a44;
+  --color-paper: #fbf8f1;
+  /* Faint blue notebook rules. */
+  --color-rule: #e3e9f1;
+}
+
+body {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-900);
+}
+
+/* Ruled notebook paper, for page backgrounds. */
+.paper {
+  background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--color-rule) 31px 32px);
+}
+
+/*
+ * Night mode: a navy chalkboard with chalk-white text. <html data-theme="dark"> is set before the
+ * page paints by the script in layout.tsx (device setting, or the sun/moon button's saved choice).
  *
- * Instead of a dark: class on every element, night mode flips the gray, amber and green
- * color scales and darkens white surfaces. Elements that are already dark (the top bars,
- * dialog headers) add .theme-keep so they stay exactly as they are.
+ * Instead of a dark: class on every element, night mode flips the gray, amber and green color
+ * scales and darkens white surfaces. Navy areas that should stay navy (dialog headers) add
+ * .theme-keep.
  */
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* White surfaces become dark cards; text-white is pinned back to white below. */
-  --color-white: oklch(23% 0 none);
+  /* White surfaces become dark navy cards; text-white is pinned back to white below. */
+  --color-white: #1b2440;
 
-  --color-neutral-50: oklch(14.5% 0 none);
-  --color-neutral-100: oklch(20.5% 0 none);
-  --color-neutral-200: oklch(26.9% 0 none);
-  --color-neutral-300: oklch(37.1% 0 none);
-  --color-neutral-400: oklch(43.9% 0 none);
-  --color-neutral-500: oklch(62% 0 none);
-  --color-neutral-600: oklch(72% 0 none);
-  --color-neutral-700: oklch(82% 0 none);
-  --color-neutral-800: oklch(90% 0 none);
-  --color-neutral-900: oklch(95% 0 none);
-  --color-neutral-950: oklch(98.5% 0 none);
+  --color-neutral-50: #121a2e;
+  --color-neutral-100: #151d33;
+  --color-neutral-200: #1f2944;
+  --color-neutral-300: #2f3a58;
+  --color-neutral-400: #46516f;
+  --color-neutral-500: #8a93ab;
+  --color-neutral-600: #a8afc3;
+  --color-neutral-700: #c6cbd8;
+  --color-neutral-800: #dde0e8;
+  --color-neutral-900: #eceef2;
+  --color-neutral-950: #f6f4ee;
+
+  --color-ink: #f3f0e6;
+  --color-paper: #151d33;
+  --color-rule: rgb(255 255 255 / 0.035);
 
   --color-amber-50: oklch(27.9% 0.077 45.635);
   --color-amber-100: oklch(33% 0.09 46);
@@ -46,20 +92,20 @@
   --color-emerald-950: oklch(95% 0.052 163.051);
 }
 
-/* Already-dark areas keep their original colors. */
+/* Navy areas (dialog headers) keep their day colors. */
 :root[data-theme='dark'] .theme-keep {
   --color-white: #fff;
-  --color-neutral-50: oklch(98.5% 0 none);
-  --color-neutral-100: oklch(97% 0 none);
-  --color-neutral-200: oklch(92.2% 0 none);
-  --color-neutral-300: oklch(87% 0 none);
-  --color-neutral-400: oklch(70.8% 0 none);
-  --color-neutral-500: oklch(55.6% 0 none);
-  --color-neutral-600: oklch(43.9% 0 none);
-  --color-neutral-700: oklch(37.1% 0 none);
-  --color-neutral-800: oklch(26.9% 0 none);
-  --color-neutral-900: oklch(20.5% 0 none);
-  --color-neutral-950: oklch(14.5% 0 none);
+  --color-neutral-50: #fdfbf6;
+  --color-neutral-100: #f7f3ea;
+  --color-neutral-200: #eee8da;
+  --color-neutral-300: #e0d9c8;
+  --color-neutral-400: #b5b1a5;
+  --color-neutral-500: #6d7389;
+  --color-neutral-600: #5a6280;
+  --color-neutral-700: #444e6a;
+  --color-neutral-800: #2f3955;
+  --color-neutral-900: #1e2a44;
+  --color-neutral-950: #131c33;
 }
 
 /* White text (on red buttons and dark chips) stays white. */
@@ -69,10 +115,10 @@
 
 /* Dark chips and badges outside the top bars stay dark, a step lighter than the page. */
 :root[data-theme='dark'] :is(.bg-neutral-950, .bg-neutral-900):not(.theme-keep, .theme-keep *) {
-  background-color: oklch(34% 0 none);
+  background-color: #2f3a58;
 }
 :root[data-theme='dark'] .bg-neutral-800:not(.theme-keep, .theme-keep *) {
-  background-color: oklch(40% 0 none);
+  background-color: #3a4566;
 }
 :root[data-theme='dark'] .bg-amber-700 {
   background-color: oklch(55.5% 0.163 48.998);
@@ -83,7 +129,7 @@
 
 /* Strong outlines soften so cards don't glow. */
 :root[data-theme='dark'] .border-neutral-900:not(.theme-keep, .theme-keep *) {
-  border-color: oklch(58% 0 none);
+  border-color: #5a6585;
 }
 
 /* Brand red text is lightened so it stays readable on dark backgrounds. */
@@ -92,4 +138,18 @@
 }
 :root[data-theme='dark'] :is(.text-\[\#9B0A27\], .text-\[\#990000\], .text-\[\#7A0820\]) {
   color: #ff9aa9;
+}
+
+/* A hand-drawn wave under a word or heading (see Wave.tsx). */
+.wave-under {
+  position: relative;
+  white-space: nowrap;
+}
+.wave-under > svg {
+  position: absolute;
+  left: 0;
+  bottom: -0.28em;
+  width: 100%;
+  height: 0.32em;
+  overflow: visible;
 }

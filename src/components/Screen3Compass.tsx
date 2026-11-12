@@ -6,7 +6,6 @@ import { compassMessageFrom, type CompassAnswer } from '@/lib/compass-message';
 import {
   ArrowLeft,
   Send,
-  Sparkles,
   CheckCircle,
   XCircle,
   RotateCcw,
@@ -200,7 +199,7 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
 
       {/* Screen Header matching whiteboard: "Compass" */}
       <div className="text-center space-y-1.5">
-        <h1 className="text-3xl sm:text-4xl font-bold font-serif text-neutral-950 tracking-tight">
+        <h1 className="text-3xl sm:text-4xl font-semibold font-serif text-neutral-950 tracking-tight">
           Compass
         </h1>
         <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-neutral-700">
@@ -252,14 +251,11 @@ export const Screen3Compass: React.FC<Screen3CompassProps> = ({
       {/* Main Greeting Prompt Box matching whiteboard:
           "Hi, X! How can I help you with Y?"
           along with clean quick prompt cards (WITHOUT 'x', 'y', 'z' letters) */}
-      <div className="bg-white border-2 border-neutral-900 rounded-3xl p-5 sm:p-7 shadow-sm space-y-6">
+      <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-7 space-y-6">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-[#BA0C2F] text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-[#BA0C2F]" />
-            <span>Ohio State Syllabus Compliance Guide</span>
-          </div>
+          <p className="font-hand text-xl text-[#BA0C2F] -rotate-1 origin-left">ask away, it only answers from the syllabus</p>
 
-          <h2 className="text-xl sm:text-2xl font-bold text-neutral-950 font-serif leading-snug">
+          <h2 className="text-xl sm:text-2xl font-semibold text-neutral-950 font-serif leading-snug">
             {studentFirstName ? `Hi, ${studentFirstName}!` : 'Hi!'} <br className="hidden sm:inline" />
             How can I help you with {assignment.title}?
           </h2>

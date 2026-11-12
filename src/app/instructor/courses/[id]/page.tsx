@@ -86,7 +86,7 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
         </Link>
 
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold font-serif text-neutral-950">
+          <h1 className="text-3xl font-semibold font-serif text-neutral-950">
             {course.code ?? 'New course'}
             {course.name ? `: ${course.name}` : ''}
           </h1>

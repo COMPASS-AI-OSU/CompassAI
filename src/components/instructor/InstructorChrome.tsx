@@ -12,23 +12,23 @@ export const secondaryButton = `${buttonLink} bg-white border-2 border-neutral-9
 
 export function InstructorHeader({ email }: { email: string }) {
   return (
-    <header className="theme-keep w-full bg-neutral-950 text-white border-b-2 border-b-[#BA0C2F]">
+    <header className="w-full bg-neutral-50/90 text-neutral-900 border-b border-neutral-300">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         <Link
           href="/instructor"
           className="flex items-center gap-2.5 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]"
         >
           <CompassMark className="w-9 h-9" />
-          <span className="font-extrabold">CompassAI</span>
-          <span className="text-[11px] font-bold uppercase bg-[#BA0C2F] px-1.5 py-0.5 rounded">Instructor</span>
+          <span className="text-xl font-semibold font-serif tracking-tight text-neutral-950">Compass</span>
+          <span className="font-hand text-xl leading-none text-[#BA0C2F] -rotate-3">instructor</span>
         </Link>
         <div className="flex items-center gap-3 text-sm">
-          <ThemeToggle onDark />
-          <span className="hidden sm:inline text-neutral-300">{email}</span>
+          <ThemeToggle />
+          <span className="hidden sm:inline text-neutral-700">{email}</span>
           <form action={signOut}>
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-600 hover:bg-neutral-800 font-semibold cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-neutral-400 text-neutral-800 hover:bg-neutral-200 font-semibold cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]"
             >
               <LogOut className="w-4 h-4" aria-hidden="true" />
               Sign out

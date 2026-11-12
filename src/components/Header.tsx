@@ -1,23 +1,24 @@
 import React from 'react';
 import Link from 'next/link';
-import { Compass, LogIn, LogOut } from 'lucide-react';
+import { LogIn, LogOut } from 'lucide-react';
+import { CompassMark } from './auth/AuthShell';
 import { SessionUser } from '../types';
 import { signOut } from '@/app/(auth)/actions';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
+  /** Not shown here anymore: the step bar under the header shows where you are. */
   currentScreen: 1 | 2 | 3;
   onNavigateScreen: (screen: 1 | 2 | 3) => void;
   user: SessionUser | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentScreen,
   onNavigateScreen,
   user,
 }) => {
   return (
-    <header className="theme-keep w-full bg-neutral-950 text-white border-b-2 border-b-[#BA0C2F] sticky top-0 z-30 transition-colors">
+    <header className="w-full bg-neutral-50/90 backdrop-blur-sm text-neutral-900 border-b border-neutral-300 sticky top-0 z-30 transition-colors">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         {/* Zone 1: Ohio State CompassAI wordmark */}
         <div className="flex items-center gap-2.5">
@@ -26,89 +27,45 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2.5 group text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] rounded-md p-1 -m-1"
             title="Return to CompassAI Courses"
           >
-            <div className="w-8 h-8 rounded-lg bg-[#BA0C2F] text-white flex items-center justify-center font-bold shadow-xs">
-              <Compass className="w-5 h-5 text-white transition-transform group-hover:rotate-45" />
-            </div>
+            <CompassMark className="w-8 h-8 transition-transform group-hover:rotate-45" />
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-base font-extrabold tracking-tight text-white group-hover:text-neutral-200 transition-colors">
-                  CompassAI
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-[#BA0C2F] text-white px-1.5 py-0.2 rounded font-mono">
-                  OSU
-                </span>
+              <div className="flex items-baseline gap-1">
+                <span className="text-xl font-semibold font-serif tracking-tight text-neutral-950">Compass</span>
+                <span className="text-xs font-bold text-[#BA0C2F]">AI</span>
               </div>
-              <span className="hidden sm:inline-block text-[11px] font-normal text-neutral-400">
-                The Ohio State University · Syllabus Guide
-              </span>
+              <span className="hidden sm:block -mt-0.5 text-[11px] text-neutral-600">Ohio State · Syllabus guide</span>
             </div>
           </button>
         </div>
 
-        {/* Zone 2: Screen indicators / links */}
-        <nav className="hidden md:flex items-center gap-1 text-xs font-semibold text-neutral-300">
-          <button
-            onClick={() => onNavigateScreen(1)}
-            className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
-              currentScreen === 1
-                ? 'bg-[#BA0C2F] text-white font-bold'
-                : 'hover:text-white hover:bg-neutral-800'
-            }`}
-          >
-            1. OSU Courses
-          </button>
-          <span className="text-neutral-600">/</span>
-          <button
-            onClick={() => onNavigateScreen(2)}
-            className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
-              currentScreen === 2
-                ? 'bg-[#BA0C2F] text-white font-bold'
-                : 'hover:text-white hover:bg-neutral-800'
-            }`}
-          >
-            2. Policy Table
-          </button>
-          <span className="text-neutral-600">/</span>
-          <button
-            onClick={() => onNavigateScreen(3)}
-            className={`px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
-              currentScreen === 3
-                ? 'bg-[#BA0C2F] text-white font-bold'
-                : 'hover:text-white hover:bg-neutral-800'
-            }`}
-          >
-            3. Compass Chat
-          </button>
-        </nav>
-
         {/* Zone 3: Night mode, then the signed-in person or a Sign in link */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <ThemeToggle onDark />
+          <ThemeToggle />
           {user ? (
             <div className="flex items-center gap-2">
               {user.role === 'instructor' && (
                 <Link
                   href="/instructor"
-                  className="hidden sm:inline-flex px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#BA0C2F] hover:bg-[#990000] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="hidden sm:inline-flex px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#BA0C2F] hover:bg-[#990000] text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-2"
                 >
                   Instructor dashboard
                 </Link>
               )}
-              <div className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-lg border border-neutral-700 bg-neutral-900">
+              <div className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-lg border border-neutral-300 bg-white">
                 <div
                   className="w-6 h-6 rounded-full bg-[#BA0C2F] text-white flex items-center justify-center font-bold text-xs"
                   aria-hidden="true"
                 >
                   {user.email.charAt(0).toUpperCase()}
                 </div>
-                <span className="hidden sm:block text-xs font-semibold text-white max-w-[180px] truncate">
+                <span className="hidden sm:block text-xs font-semibold text-neutral-900 max-w-[180px] truncate">
                   {user.email}
                 </span>
               </div>
               <form action={signOut}>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-600 text-xs font-semibold hover:bg-neutral-800 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-neutral-400 text-xs font-semibold text-neutral-800 hover:bg-neutral-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]"
                 >
                   <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                   Sign out
@@ -118,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <Link
               href="/sign-in"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#BA0C2F] hover:bg-[#990000] text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#BA0C2F] hover:bg-[#990000] text-white text-xs font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F] focus-visible:ring-offset-2"
             >
               <LogIn className="w-3.5 h-3.5" aria-hidden="true" />
               Sign in

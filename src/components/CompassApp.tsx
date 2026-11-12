@@ -153,7 +153,7 @@ export default function CompassApp({
   );
 
   return (
-    <div className="min-h-screen bg-neutral-100 text-neutral-900 flex flex-col font-sans antialiased selection:bg-[#BA0C2F]/20 selection:text-neutral-950">
+    <div className="paper min-h-screen bg-neutral-100 text-neutral-900 flex flex-col font-sans antialiased selection:bg-[#BA0C2F]/20 selection:text-neutral-950">
       {/* Top Application Bar */}
       <Header currentScreen={currentScreen} onNavigateScreen={handleDirectNavigation} user={user} />
 
@@ -239,10 +239,10 @@ export default function CompassApp({
       </main>
 
       {/* Ohio State University Footer */}
-      <footer className="w-full py-4 border-t border-neutral-300 bg-white text-center text-xs text-neutral-500 px-4">
+      <footer className="w-full py-4 border-t border-neutral-300 bg-neutral-50 text-center text-xs text-neutral-600 px-4">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-[#BA0C2F]">CompassAI</span>
+            <span className="font-serif font-semibold text-neutral-950">Compass<span className="text-[#BA0C2F]">AI</span></span>
             <span className="text-neutral-300">·</span>
             <span className="font-medium text-neutral-700">The Ohio State University COAM Syllabus Companion</span>
           </div>

@@ -61,13 +61,13 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
       {courseSwitcher}
 
       {/* Header section matching whiteboard: Course Name & Prof Name */}
-      <div className="bg-white border-t-4 border-t-[#BA0C2F] border-x border-b border-neutral-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-3">
+      <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
           <div>
-            <div className="text-xs uppercase tracking-wider font-bold text-[#BA0C2F]">
-              The Ohio State University · {course.department}
+            <div className="font-hand text-xl text-[#BA0C2F] -rotate-1 origin-left">
+              Ohio State · {course.department}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-950 font-serif tracking-tight mt-0.5">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-neutral-950 font-serif tracking-tight mt-0.5">
               {course.code}: {course.name}
             </h1>
             <div className="text-sm sm:text-base font-semibold text-neutral-700 mt-1">

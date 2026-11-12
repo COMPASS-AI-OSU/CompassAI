@@ -15,7 +15,7 @@ export const StepBreadcrumb: React.FC<StepBreadcrumbProps> = ({
   backLabel = 'Back',
 }) => {
   return (
-    <div className="w-full bg-neutral-200/90 border-b border-neutral-300 px-4 py-2.5">
+    <div className="w-full border-b border-dashed border-neutral-300 px-4 py-2.5">
       <div className="flex items-center justify-between gap-3 max-w-5xl mx-auto">
         {/* Back button when on screen 2 or 3 */}
         {currentScreen > 1 && onBack ? (
@@ -28,7 +28,7 @@ export const StepBreadcrumb: React.FC<StepBreadcrumbProps> = ({
           </button>
         ) : (
           <div className="text-[11px] font-bold tracking-wider text-neutral-600 uppercase">
-            Ohio State Carmen · Step 1 of 3
+            Step 1 of 3
           </div>
         )}
 
@@ -37,7 +37,7 @@ export const StepBreadcrumb: React.FC<StepBreadcrumbProps> = ({
           <span
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold ${
               currentScreen === 1
-                ? 'bg-[#BA0C2F] text-white shadow-2xs'
+                ? 'bg-ink text-paper'
                 : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
@@ -49,7 +49,7 @@ export const StepBreadcrumb: React.FC<StepBreadcrumbProps> = ({
           <span
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold ${
               currentScreen === 2
-                ? 'bg-[#BA0C2F] text-white shadow-2xs'
+                ? 'bg-ink text-paper'
                 : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
@@ -61,7 +61,7 @@ export const StepBreadcrumb: React.FC<StepBreadcrumbProps> = ({
           <span
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold ${
               currentScreen === 3
-                ? 'bg-[#BA0C2F] text-white shadow-2xs'
+                ? 'bg-ink text-paper'
                 : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { CourseSummary, RecentSession, StudentProfile } from '../types';
 import { MyCoursesPanel } from './MyCoursesPanel';
+import { WaveUnderline } from './Wave';
 import { timeAgo } from '@/lib/compass-message';
-import { Search, ArrowRight, GraduationCap, ChevronRight, BookOpen, Loader2, AlertCircle, History } from 'lucide-react';
+import { Search, ArrowRight, ChevronRight, BookOpen, Loader2, AlertCircle, History } from 'lucide-react';
 
 interface Screen1CoursesProps {
   student: StudentProfile;
@@ -50,16 +51,17 @@ export const Screen1Courses: React.FC<Screen1CoursesProps> = ({
     <div className="w-full max-w-4xl mx-auto px-4 py-5 sm:py-8 space-y-6 pb-8 relative">
       {/* Header section matching whiteboard: "Welcome, <name>" */}
       <div className="space-y-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#BA0C2F] bg-[#BA0C2F]/10 px-3 py-1 rounded-md border border-[#BA0C2F]/20">
-            <GraduationCap className="w-3.5 h-3.5 text-[#BA0C2F]" />
-            <span>The Ohio State University · Autumn 2026</span>
-          </div>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-950 font-serif">
-          {student.name ? `Welcome, ${student.name.split(' ')[0]}` : 'Welcome'}
+        <p className="font-hand text-xl text-[#BA0C2F] -rotate-1 origin-left">Ohio State · Autumn 2026</p>
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-neutral-950 font-serif">
+          {student.name ? (
+            <>
+              Welcome, <WaveUnderline>{student.name.split(' ')[0]}</WaveUnderline>
+            </>
+          ) : (
+            'Welcome'
+          )}
         </h1>
-        <p className="text-base sm:text-lg text-neutral-800 font-bold pt-1">What course do you want help with?</p>
+        <p className="text-base sm:text-lg text-neutral-800 font-bold pt-3">What course do you want help with?</p>
         <p className="text-xs text-neutral-600">
           Check CarmenCanvas syllabus AI boundaries, COAM rules, and assignment permissions.
         </p>
