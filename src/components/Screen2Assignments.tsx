@@ -31,6 +31,25 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
 }) => {
   const [filter, setFilter] = useState<'all' | 'strictly_prohibited' | 'partial_allowed' | 'allowed_with_disclosure' | 'allowed' | 'study_prep_only'>('all');
 
+  // Filter tabs with counts (#15). Counts come from the same aiStatus the filter uses, so the
+  // levels always add up to All. Any other level gets its own tab, so nothing is left out.
+  type FilterId = typeof filter;
+  const countOf = (status: FilterId) => course.assignments.filter((a) => a.aiStatus === status).length;
+  const levelTabs: { id: FilterId; label: string; activeClass: string }[] = [
+    { id: 'strictly_prohibited', label: 'Prohibited', activeClass: 'bg-[#BA0C2F]' },
+    { id: 'partial_allowed', label: 'Partial', activeClass: 'bg-amber-700' },
+    { id: 'allowed_with_disclosure', label: 'Allowed with disclosure', activeClass: 'bg-neutral-900' },
+    { id: 'allowed', label: 'Allowed', activeClass: 'bg-emerald-800' },
+    { id: 'study_prep_only', label: 'Study prep only', activeClass: 'bg-neutral-900' },
+  ];
+  const filterTabs = [
+    { id: 'all' as FilterId, label: 'All', activeClass: 'bg-[#BA0C2F]', count: course.assignments.length },
+    ...levelTabs
+      .map((tab) => ({ ...tab, count: countOf(tab.id) }))
+      // "Study prep only" isn't an instructor level today; show it only if a course ever uses it.
+      .filter((tab) => tab.id !== 'study_prep_only' || tab.count > 0),
+  ];
+
   // Strictly sort assignments in chronological order of due date (Requirement 6)
   const sortedAndFilteredAssignments = [...course.assignments]
     .sort((a, b) => (a.dueDateTimestamp ?? Number.MAX_SAFE_INTEGER) - (b.dueDateTimestamp ?? Number.MAX_SAFE_INTEGER))
@@ -104,56 +123,24 @@ export const Screen2Assignments: React.FC<Screen2AssignmentsProps> = ({
           <span className="text-neutral-500 font-bold text-[11px] uppercase mr-1 whitespace-nowrap">
             Filter:
           </span>
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
-              filter === 'all'
-                ? 'bg-[#BA0C2F] text-white shadow-2xs'
-                : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-            }`}
-          >
-            All ({course.assignments.length})
-          </button>
-          <button
-            onClick={() => setFilter('strictly_prohibited')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
-              filter === 'strictly_prohibited'
-                ? 'bg-[#BA0C2F] text-white shadow-2xs'
-                : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-            }`}
-          >
-            Prohibited Only
-          </button>
-          <button
-            onClick={() => setFilter('partial_allowed')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
-              filter === 'partial_allowed'
-                ? 'bg-amber-700 text-white shadow-2xs'
-                : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-            }`}
-          >
-            Partial Only
-          </button>
-          <button
-            onClick={() => setFilter('allowed_with_disclosure')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
-              filter === 'allowed_with_disclosure'
-                ? 'bg-neutral-900 text-white shadow-2xs'
-                : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-            }`}
-          >
-            Allowed w/ Disclosure
-          </button>
-          <button
-            onClick={() => setFilter('allowed')}
-            className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap ${
-              filter === 'allowed'
-                ? 'bg-emerald-800 text-white shadow-2xs'
-                : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-            }`}
-          >
-            Allowed
-          </button>
+          {filterTabs.map((tab) => {
+            const selected = filter === tab.id;
+            const empty = tab.id !== 'all' && tab.count === 0;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setFilter(tab.id)}
+                aria-pressed={selected}
+                disabled={empty && !selected}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed ${
+                  selected ? `${tab.activeClass} text-white shadow-2xs` : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            );
+          })}
         </div>
 
         {/* Chronological Due Date Indicator Badge (Requirement 6) */}
