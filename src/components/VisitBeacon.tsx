@@ -20,7 +20,8 @@ export function VisitBeacon() {
     fetch('/api/events/visit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ref ? { ref } : {}),
+      // `home` lets the server save which headline version a logged-out visitor saw (#57).
+      body: JSON.stringify({ ...(ref ? { ref } : {}), home: window.location.pathname === '/' }),
       keepalive: true,
     }).catch(() => {
       // Analytics never gets in the way of the page.
