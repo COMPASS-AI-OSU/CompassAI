@@ -1,10 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, MessageSquareText, PlayCircle, Search, ShieldCheck } from 'lucide-react';
+import { ArrowRight, BookOpen, MessageSquareText, Search, ShieldCheck } from 'lucide-react';
 import { CompassMark } from '@/components/auth/AuthShell';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PolicyBadge } from '@/components/PolicyBadge';
 import { WaveDivider, WaveUnderline } from '@/components/Wave';
+import { TeaserVideo } from '@/components/TeaserVideo';
 import type { HeadlineVariant } from '@/lib/experiment';
 
 /**
@@ -78,15 +79,8 @@ export function LandingPage({ variant = 'a' }: { variant?: HeadlineVariant }) {
             </div>
           </div>
 
-          {/* Teaser video goes here once it's ready. */}
-          <div
-            className="aspect-video w-full rounded-2xl border-2 border-dashed border-neutral-400 bg-neutral-50 flex flex-col items-center justify-center gap-1 text-neutral-600 -rotate-1"
-            role="img"
-            aria-label="Video coming soon"
-          >
-            <PlayCircle className="w-12 h-12 text-neutral-400" aria-hidden="true" />
-            <p className="font-hand text-2xl text-neutral-700">video coming soon</p>
-          </div>
+          {/* Teaser: real screens from the live site (public/teaser). Same for both headline versions (#57). */}
+          <TeaserVideo />
         </section>
 
         <WaveDivider className="mb-10 sm:mb-14" />
