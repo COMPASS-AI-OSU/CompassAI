@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCurrentUser, safeNextPath } from '@/lib/auth';
-import { cleanHeardAbout, cleanRef, firstRef, logEvent } from '@/lib/events';
+import { cleanHeardAbout, cleanRef, firstRef, headlineVariant, logEvent } from '@/lib/events';
 import { checkFirstName, cleanFirstName } from '@/lib/names';
 
 export type Field = 'firstName' | 'email' | 'password' | 'confirm' | 'code';
@@ -192,6 +192,8 @@ export async function signUp(_prev: FormState | undefined, formData: FormData): 
       // The tag the form sent from this browser's first visit; the server's cookie as a fallback.
       channel: cleanRef(text(formData, 'ref')) ?? (await firstRef()),
       heardAbout: cleanHeardAbout(text(formData, 'heard_about')),
+      // Headline experiment (#57): the version they saw on the home page, if any.
+      variant: await headlineVariant(),
     });
   }
 

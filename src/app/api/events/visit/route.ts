@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/auth';
-import { cleanRef, logEvent, rememberFirstRef, visitorId } from '@/lib/events';
+import { cleanRef, headlineVariant, logEvent, rememberFirstRef, visitorId } from '@/lib/events';
 
 /**
  * Saves a "visit" event each time someone opens the site (called once per page load by
@@ -13,9 +13,11 @@ export async function POST(request: Request) {
   }
 
   let ref: string | null = null;
+  let onHomePage = false;
   try {
     const body = await request.json();
     ref = cleanRef(body?.ref);
+    onHomePage = body?.home === true;
   } catch {
     // No body or not JSON: a visit without a tag.
   }
@@ -28,6 +30,8 @@ export async function POST(request: Request) {
     actorId: user?.id ?? (await visitorId()),
     signedIn: Boolean(user),
     channel: ref,
+    // Headline experiment (#57): only logged-out visitors on the home page see a headline version.
+    variant: !user && onHomePage ? await headlineVariant() : null,
   });
   return new Response(null, { status: 204 });
 }

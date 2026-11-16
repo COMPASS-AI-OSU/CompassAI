@@ -5,12 +5,14 @@ import { CompassMark } from '@/components/auth/AuthShell';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PolicyBadge } from '@/components/PolicyBadge';
 import { WaveDivider, WaveUnderline } from '@/components/Wave';
+import type { HeadlineVariant } from '@/lib/experiment';
 
 /**
  * The home page for visitors who aren't signed in: what CompassAI is, who it's for, and one
  * sign-up button. Copy comes from our launch deck. No made-up quotes, user counts or logos.
+ * The headline and the line under it are an experiment (#57): A is our current copy, B is COAM.
  */
-export function LandingPage() {
+export function LandingPage({ variant = 'a' }: { variant?: HeadlineVariant }) {
   return (
     <div className="paper min-h-screen bg-neutral-100 text-neutral-900 flex flex-col font-sans antialiased">
       <header className="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-5 sm:pt-8 flex items-center justify-between gap-4">
@@ -40,12 +42,25 @@ export function LandingPage() {
         <section aria-labelledby="landing-headline" className="pt-8 sm:pt-16 pb-10 sm:pb-14 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div>
             <p className="font-hand text-2xl text-[#BA0C2F] -rotate-2 origin-left">for Ohio State students</p>
-            <h1 id="landing-headline" className="mt-1 text-4xl sm:text-6xl font-semibold font-serif tracking-tight text-neutral-950 leading-[1.08]">
-              Students ask. The syllabus <WaveUnderline>answers.</WaveUnderline>
-            </h1>
-            <p className="mt-6 text-base sm:text-lg text-neutral-700 max-w-xl leading-relaxed">
-              Tells OSU students if they can use AI on each assignment, straight from the syllabus.
-            </p>
+            {variant === 'b' ? (
+              <>
+                <h1 id="landing-headline" className="mt-1 text-4xl sm:text-6xl font-semibold font-serif tracking-tight text-neutral-950 leading-[1.08]">
+                  Don’t guess your way into a <WaveUnderline>COAM case.</WaveUnderline>
+                </h1>
+                <p className="mt-6 text-base sm:text-lg text-neutral-700 max-w-xl leading-relaxed">
+                  CompassAI tells you whether AI is allowed on your assignment, straight from your professor’s syllabus.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 id="landing-headline" className="mt-1 text-4xl sm:text-6xl font-semibold font-serif tracking-tight text-neutral-950 leading-[1.08]">
+                  Students ask. The syllabus <WaveUnderline>answers.</WaveUnderline>
+                </h1>
+                <p className="mt-6 text-base sm:text-lg text-neutral-700 max-w-xl leading-relaxed">
+                  Tells OSU students if they can use AI on each assignment, straight from the syllabus.
+                </p>
+              </>
+            )}
             <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
               <Link
                 href="/sign-up"

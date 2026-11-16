@@ -2,6 +2,7 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { HEARD_ABOUT, type HeardAbout } from '@/lib/heard-about';
+import { cleanVariant, HEADLINE_COOKIE, type HeadlineVariant } from '@/lib/experiment';
 
 /**
  * Launch analytics (`events` table). Rows are written only here, on the server, with the secret
@@ -51,6 +52,11 @@ export async function rememberFirstRef(tag: string | null): Promise<void> {
   if (!cleanRef(jar.get(FIRST_REF_COOKIE)?.value)) jar.set(FIRST_REF_COOKIE, tag, cookieOptions);
 }
 
+/** The headline version this browser was given on the home page (#57), or null. */
+export async function headlineVariant(): Promise<HeadlineVariant | null> {
+  return cleanVariant((await cookies()).get(HEADLINE_COOKIE)?.value);
+}
+
 export async function firstRef(): Promise<string | null> {
   return cleanRef((await cookies()).get(FIRST_REF_COOKIE)?.value);
 }
@@ -82,16 +88,26 @@ export async function logEvent(row: {
   signedIn: boolean;
   channel?: string | null;
   heardAbout?: HeardAbout | null;
+  /** Headline experiment (#57): the version they saw, on visit and sign_up rows only. */
+  variant?: HeadlineVariant | null;
 }): Promise<void> {
   try {
     if (!UUID.test(row.actorId)) return;
-    const { error } = await createAdminClient().from('events').insert({
+    const base = {
       event: row.event,
       actor_id: row.actorId,
       signed_in: row.signedIn,
       channel: row.channel ?? null,
       heard_about: row.event === 'sign_up' ? row.heardAbout ?? null : null,
-    });
+    };
+    const variant = row.event === 'core_action' ? null : row.variant ?? null;
+    const db = createAdminClient();
+    const withVariant: Record<string, unknown> = variant ? { ...base, variant } : base;
+    let { error } = await db.from('events').insert(withVariant);
+    // Until the events_variant migration runs, save the row without the version rather than lose it.
+    if (error && variant && /variant/.test(error.message)) {
+      ({ error } = await db.from('events').insert(base));
+    }
     if (error) console.error(`Couldn't save the ${row.event} event:`, error.message);
   } catch (error) {
     console.error(`Couldn't save the ${row.event} event:`, error);

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { cleanVariant, HEADLINE_COOKIE, HEADLINE_COOKIE_MAX_AGE, pickVariant } from '@/lib/experiment';
 
 // Pages a logged-out visitor can't open. Each page also checks the role on
 // the server; this is only the first, quick check.
@@ -53,6 +54,27 @@ export async function proxy(request: NextRequest) {
     const redirect = NextResponse.redirect(new URL(isInstructor ? '/instructor' : '/', request.url));
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
     return redirect;
+  }
+
+  // Headline experiment (#57): a logged-out visitor to the home page without a version yet gets
+  // one at random. It goes on the request too, so the page renders that version right away.
+  if (!signedIn && path === '/' && !cleanVariant(request.cookies.get(HEADLINE_COOKIE)?.value)) {
+    const variant = pickVariant();
+    request.cookies.set(HEADLINE_COOKIE, variant);
+    const previous = response;
+    response = NextResponse.next({ request });
+    previous.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+    ['cache-control', 'expires', 'pragma'].forEach((key) => {
+      const value = previous.headers.get(key);
+      if (value) response.headers.set(key, value);
+    });
+    response.cookies.set(HEADLINE_COOKIE, variant, {
+      path: '/',
+      maxAge: HEADLINE_COOKIE_MAX_AGE,
+      sameSite: 'lax',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
   }
 
   return response;
