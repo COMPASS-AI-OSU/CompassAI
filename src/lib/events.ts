@@ -9,7 +9,7 @@ import { cleanVariant, HEADLINE_COOKIE, type HeadlineVariant } from '@/lib/exper
  * key; users can't read or write the table. We never save names, emails or question text.
  */
 
-export type EventName = 'visit' | 'sign_up' | 'core_action';
+export type EventName = 'visit' | 'sign_up' | 'save_course' | 'core_action';
 
 /** Random ID for a browser that isn't signed in. */
 export const VISITOR_COOKIE = 'compass_vid';
@@ -100,7 +100,7 @@ export async function logEvent(row: {
       channel: row.channel ?? null,
       heard_about: row.event === 'sign_up' ? row.heardAbout ?? null : null,
     };
-    const variant = row.event === 'core_action' ? null : row.variant ?? null;
+    const variant = row.event === 'visit' || row.event === 'sign_up' ? row.variant ?? null : null;
     const db = createAdminClient();
     const withVariant: Record<string, unknown> = variant ? { ...base, variant } : base;
     let { error } = await db.from('events').insert(withVariant);
