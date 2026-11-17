@@ -2,6 +2,7 @@
 
 import { getCurrentUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import { accountChannel, firstRef, logEvent } from '@/lib/events';
 
 export interface MyCourse {
   id: string;
@@ -42,6 +43,12 @@ export async function joinCourseByCode(_prev: JoinState | undefined, formData: F
   if (error || !data) return { error: 'We couldn’t add the course right now. Try again.' };
 
   if (data.result === 'added' || data.result === 'already_added') {
+    // Launch analytics (#64): a first-time save is the middle step of our funnel. Saving the same
+    // course again adds no row. Saves the account ID and channel tag, never the course.
+    if (data.result === 'added') {
+      const channel = (await accountChannel(user.id)) ?? (await firstRef());
+      await logEvent({ event: 'save_course', actorId: user.id, signedIn: true, channel });
+    }
     const { data: course } = await supabase.from('courses').select('code, name').eq('id', data.course_id!).maybeSingle();
     const label = [course?.code, course?.name].filter(Boolean).join(' · ') || 'The course';
     return { added: data.result === 'added' ? `Added ${label} to My Courses.` : `${label} is already in My Courses.` };
