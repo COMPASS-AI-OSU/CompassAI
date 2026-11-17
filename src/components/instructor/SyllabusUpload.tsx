@@ -14,9 +14,15 @@ type Step =
   | { kind: 'idle' }
   | { kind: 'uploading' }
   | { kind: 'reading' }
-  | { kind: 'error'; message: string; retryPath?: string; existingCourseId?: string };
+  | { kind: 'error'; message: string; retryPath?: string; existingCourseId?: string }
+  | { kind: 'replaced'; added: number; kept: number; notInNewSyllabus: string[] };
 
-export function SyllabusUpload({ userId }: { userId: string }) {
+/**
+ * Upload a syllabus PDF. Without `courseId` it creates a new Draft course (Add a course).
+ * With `courseId` it replaces that course's syllabus (#7): checked assignments stay as they are,
+ * and assignments the course doesn't have yet are added for review.
+ */
+export function SyllabusUpload({ userId, courseId }: { userId: string; courseId?: string }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>({ kind: 'idle' });
@@ -24,17 +30,24 @@ export function SyllabusUpload({ userId }: { userId: string }) {
   const hintId = useId();
   const errorId = useId();
   const busy = step.kind === 'uploading' || step.kind === 'reading';
+  const replacing = Boolean(courseId);
 
   async function readSyllabus(path: string) {
     setStep({ kind: 'reading' });
     try {
-      const res = await fetch('/api/courses/import', {
+      const res = await fetch(replacing ? `/api/courses/${courseId}/syllabus` : '/api/courses/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.courseId) {
+        if (replacing) {
+          setStep({ kind: 'replaced', added: data.added ?? 0, kept: data.kept ?? 0, notInNewSyllabus: data.notInNewSyllabus ?? [] });
+          if (inputRef.current) inputRef.current.value = '';
+          router.refresh(); // Show the new assignments and the new PDF link.
+          return;
+        }
         router.push(`/instructor/courses/${data.courseId}?imported=${data.assignments ?? 0}`);
         return;
       }
@@ -75,7 +88,28 @@ export function SyllabusUpload({ userId }: { userId: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="bg-white border-2 border-neutral-900 rounded-3xl p-6 space-y-5 max-w-2xl">
+    <form
+      onSubmit={onSubmit}
+      noValidate
+      className={replacing ? 'space-y-4' : 'bg-white border-2 border-neutral-900 rounded-3xl p-6 space-y-5 max-w-2xl'}
+    >
+      {step.kind === 'replaced' && (
+        <FormAlert tone="success">
+          <p>
+            New syllabus saved.{' '}
+            {step.added === 0
+              ? 'It has no assignments you don’t already have.'
+              : `We added ${step.added === 1 ? '1 new assignment' : `${step.added} new assignments`} below, marked Needs review. Students won’t see ${step.added === 1 ? 'it' : 'them'} until you confirm.`}{' '}
+            Your {step.kept === 1 ? 'existing assignment' : `${step.kept} existing assignments`} stayed exactly as you set them.
+          </p>
+          {step.notInNewSyllabus.length > 0 && (
+            <p className="mt-2">
+              Not in the new syllabus, so check whether to keep:{' '}
+              <span className="font-bold">{step.notInNewSyllabus.join(', ')}</span>. Delete any you no longer use.
+            </p>
+          )}
+        </FormAlert>
+      )}
       {step.kind === 'error' && (
         <FormAlert tone="error">
           <p>{step.message}</p>
@@ -91,10 +125,13 @@ export function SyllabusUpload({ userId }: { userId: string }) {
 
       <div className="space-y-1.5">
         <label htmlFor="syllabus" className="block text-sm font-bold text-neutral-900">
-          Syllabus PDF
+          {replacing ? 'New version of the syllabus (PDF)' : 'Syllabus PDF'}
         </label>
         <p id={hintId} className="text-xs text-neutral-600">
-          PDF only, up to 10 MB. Export it from Word or Canvas if you need to.
+          PDF only, up to 10 MB.{' '}
+          {replacing
+            ? 'Your checked assignments stay as they are. Anything new is added for you to review.'
+            : 'Export it from Word or Canvas if you need to.'}
         </p>
         <input
           ref={inputRef}
@@ -137,7 +174,7 @@ export function SyllabusUpload({ userId }: { userId: string }) {
         ) : (
           <button type="submit" disabled={busy} aria-disabled={busy} className={primaryButton}>
             <FileUp className="w-4 h-4" aria-hidden="true" />
-            {busy ? 'Working…' : 'Upload and read syllabus'}
+            {busy ? 'Working…' : replacing ? 'Upload new version' : 'Upload and read syllabus'}
           </button>
         )}
       </div>
