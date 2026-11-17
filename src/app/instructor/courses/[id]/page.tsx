@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { AlertTriangle, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, ExternalLink, FileText } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { InstructorHeader, NotAllowed, PageLoading } from '@/components/instructor/InstructorChrome';
@@ -12,6 +12,7 @@ import { AddAssignmentForm } from '@/components/instructor/AddAssignmentForm';
 import { FormAlert } from '@/components/auth/fields';
 import { PublishPanel } from '@/components/instructor/PublishPanel';
 import { CourseCodePanel } from '@/components/instructor/CourseCodePanel';
+import { SyllabusUpload } from '@/components/instructor/SyllabusUpload';
 import { checkPublishable } from '@/lib/publish';
 
 export const metadata: Metadata = { title: 'Review course · CompassAI' };
@@ -45,7 +46,7 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
   const supabase = await createClient();
   const { data: course } = await supabase
     .from('courses')
-    .select('id, owner_id, code, name, term, professor, office_hours, overall_policy, status')
+    .select('id, owner_id, code, name, term, professor, office_hours, overall_policy, status, syllabus_path, imported_at')
     .eq('id', id)
     .maybeSingle();
 
@@ -68,6 +69,12 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
 
   // Only this instructor can read their course's code (row-level security on course_codes).
   const { data: codeRow } = await supabase.from('course_codes').select('code').eq('course_id', course.id).maybeSingle();
+
+  // A short-lived private link to the course's syllabus PDF (#7). Storage rules only let the owner read it.
+  const { data: signed } = course.syllabus_path
+    ? await supabase.storage.from('syllabi').createSignedUrl(course.syllabus_path, 60 * 30)
+    : { data: null };
+  const syllabusUrl = signed?.signedUrl ?? null;
 
   const rows = (assignments ?? []) as AssignmentRow[];
   const confirmed = rows.filter((a) => a.status === 'confirmed').length;
@@ -111,6 +118,36 @@ async function CourseReview({ params, searchParams }: PageProps<'/instructor/cou
         <CourseDetailsForm course={course} />
 
         <CourseCodePanel courseId={course.id} code={codeRow?.code ?? null} published={course.status === 'published'} />
+
+        <section aria-labelledby="syllabus-heading" className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 space-y-4">
+          <div className="space-y-1">
+            <h2 id="syllabus-heading" className="text-lg font-bold text-neutral-950 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-[#BA0C2F]" aria-hidden="true" /> Syllabus
+            </h2>
+            {syllabusUrl ? (
+              <p className="text-sm text-neutral-700">
+                <a
+                  href={syllabusUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-bold text-neutral-900 underline underline-offset-4 hover:text-[#BA0C2F] rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#BA0C2F]"
+                >
+                  View the syllabus PDF <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                </a>
+                {course.imported_at && (
+                  <span className="text-neutral-600">
+                    {' '}
+                    · uploaded{' '}
+                    {new Date(course.imported_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' })}
+                  </span>
+                )}
+              </p>
+            ) : (
+              <p className="text-sm text-neutral-700">No syllabus PDF yet. Upload one to fill in assignments you haven’t added.</p>
+            )}
+          </div>
+          <SyllabusUpload userId={user.id} courseId={course.id} />
+        </section>
 
         <section aria-labelledby="assignments-heading" className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
